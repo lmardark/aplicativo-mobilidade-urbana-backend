@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Enums\UserType;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -12,7 +14,18 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable([
+    'name',
+    'data_nascimento',
+    "type",
+    'telefone',
+    'cpf',
+    'email',
+    'foto',
+    'status',
+    'password'
+])]
+
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements JWTSubject
 {
@@ -54,4 +67,8 @@ class User extends Authenticatable implements JWTSubject
             'uid' => $id,
         ];
     }
+
+    protected $casts = [
+        'type' => UserType::class,
+    ];
 }
