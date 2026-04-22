@@ -16,12 +16,12 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
 #[Fillable([
     'name',
-    'data_nascimento',
-    "type",
     'telefone',
     'cpf',
+    'data_nascimento',
     'email',
     'foto',
+    "type",
     'status',
     'password'
 ])]
