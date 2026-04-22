@@ -11,6 +11,7 @@ Route::post('auth/login', LoginController::class)->name('auth.login');
 Route::middleware('auth:jwt')->group(function () {
     Route::post('auth/logout', LogoutController::class)->name('auth.logout');
     Route::apiResource('/users', UsuarioController::class);
+    Route::get('usuario-logado', [UsuarioController::class, 'usuarioLogado']);
     Route::get('/user', function (Request $request) {
         /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard */
         $guard = auth('jwt');
