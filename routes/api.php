@@ -13,6 +13,10 @@ Route::middleware('auth:jwt')->group(function () {
     Route::apiResource('/users', UsuarioController::class);
     Route::get('usuario-logado', [UsuarioController::class, 'usuarioLogado']);
     Route::delete('usuario-remover-foto-perfil/{id}', [UsuarioController::class, 'removerFotoPerfil']);
+    Route::post('usuario-arquivar', [UsuarioController::class, 'usuarioArquivar']);
+    Route::post('usuario-deletar', [UsuarioController::class, 'usuarioDeletar']);
+    Route::post('usuario-restaurar', [UsuarioController::class, 'usuarioRestaurar']);
+    Route::get('usuarios-arquivados', [UsuarioController::class, 'usuariosArquivados']);
     Route::put('usuario-alterar-foto-perfil/{id}', [UsuarioController::class, 'alterarFotoPerfil']);
     Route::get('/user', function (Request $request) {
         /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard */

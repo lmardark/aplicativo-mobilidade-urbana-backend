@@ -164,4 +164,31 @@ class UsuarioController extends Controller
             ], 500);
         }
     }
+
+    public function usuarioArquivar(Request $request)
+    {
+        try {
+            $usuarios = $request->usuarios ?? [];
+            foreach ($usuarios as $usuario) {
+                User::findOrFail($usuario['id'])->delete();
+            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuário arquiva com  sucesso'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao alterar foto: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function usuariosArquivados()
+    {
+        // return $users = User::withTrashed()->orderBy('id', 'DESC')->paginate();
+        return $users = User::onlyTrashed()
+            ->latest('updated_at')
+            ->paginate();
+    }
 }
