@@ -20,13 +20,6 @@ class UsuarioController extends Controller
     public function index()
     {
         return $users = User::orderBy('id', 'DESC')->paginate();
-
-
-        return response()->json([
-            'success' => true,
-            'message' => __('messages.success.list_record'),
-            'data' => $users
-        ], 201);
     }
 
     public function usuarioLogado()
@@ -51,45 +44,13 @@ class UsuarioController extends Controller
             "password" => bcrypt($request->password)
         ]);
 
-        $image = $request->file('image', null);
-
-        if ($image) {
-            $host = $this->SchemeAndHttpHost($request);
-            $request->validate([
-                'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg',
-            ]);
-
-
-            $image = $request->file('image');
-            $imageName = $image->getClientOriginalName();
-            $imageName = time() . '_' . $imageName;
-            $thumbnail = $image->getClientOriginalName();
-            $thumbnail = time() . '_thumbnail' . $thumbnail;
-
-            // Versão 4.0 usando o facade
-            Image::decode($image)
-                ->resize(100, 100)
-                ->save(public_path('images/') . $thumbnail);
-
-            $image->move(public_path('images'), $imageName);
-            $user->foto = "{$host}/images/{$imageName}";
-            $user->foto_thumbnail = "{$host}/images/{$thumbnail}";
-            $user->saveOrFail();
-        }
+        $this->criarImagemPefil($request, $user);
 
         return response()->json([
             'success' => true,
             'message' => 'Registro realizado com sucesso',
             'data' => $user
         ], 201);
-    }
-
-    public function SchemeAndHttpHost($request)
-    {
-        if (App::environment('local')) {
-            return $request->getSchemeAndHttpHost();
-        }
-        return "https://api.pen6.app/";
     }
 
     /**
@@ -115,20 +76,53 @@ class UsuarioController extends Controller
     {
         //
     }
+
+    public function criarImagemPefil($request, $user)
+    {
+        $image = $request->file('image', null);
+
+        if ($image) {
+
+            $host = App::environment('local') ? $request->getSchemeAndHttpHost() : "https://api.producao.app/";
+            $request->validate([
+                'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg',
+            ]);
+
+            $image = $request->file('image');
+            $imageName = $image->getClientOriginalName();
+            $imageName = time() . '_' . $imageName;
+            $thumbnail = $image->getClientOriginalName();
+            $thumbnail = time() . '_thumbnail' . $thumbnail;
+
+            Image::decode($image)
+                ->resize(100, 100)
+                ->save(public_path('images/') . $thumbnail);
+
+            $image->move(public_path('images'), $imageName);
+            $user->foto = "{$host}/images/{$imageName}";
+            $user->foto_thumbnail = "{$host}/images/{$thumbnail}";
+            $user->saveOrFail();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Registro realizado com sucesso',
+            'data' => $user
+        ], 201);
+    }
+
     public function removerFotoPerfil(string $id)
     {
         try {
             $user = User::findOrFail($id);
 
             if ($user->foto) {
-
                 if ($user->foto) {
                     $hostImagePath = public_path(str_replace(url('/'), '', $user->foto));
                     if (File::exists($hostImagePath)) {
                         File::delete($hostImagePath);
                     }
                 }
-
                 if ($user->foto_thumbnail) {
                     $hostThumbPath = public_path(str_replace(url('/'), '', $user->foto_thumbnail));
                     if (File::exists($hostThumbPath)) {
@@ -152,17 +146,22 @@ class UsuarioController extends Controller
             ], 500);
         }
     }
-    // public function removerFotoPerfil(string $id)
-    // {
-    //     $user = User::findOrFail($id);
-    //     if ($user->foto) {
-    //         File::delete([
-    //             public_path($user->image),
-    //             public_path($user->thumbnail),
-    //         ]);
-    //     }
-    //     $user->foto = null;
-    //     $user->foto_thumbnail = null;
-    //     $user->saveOrFail();
-    // }
+
+    public function alterarFotoPerfil(Request $request, string $id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            $this->removerFotoPerfil($user);
+            $this->criarImagemPefil($request, $user);
+            return response()->json([
+                'success' => true,
+                'message' => 'Foto alterada com sucesso!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao alterar foto: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
