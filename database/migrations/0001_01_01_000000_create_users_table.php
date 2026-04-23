@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('foto')->nullable();
+            $table->string('foto_thumbnail')->nullable();
             $table->rememberToken();
             $table->string('type');
             $table->string('status');

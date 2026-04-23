@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\Laravel\Facades\Image;
+use Illuminate\Support\Facades\File;
+use phpDocumentor\Reflection\Types\Integer;
 
 class UsuarioController extends Controller
 {
@@ -70,7 +72,8 @@ class UsuarioController extends Controller
                 ->save(public_path('images/') . $thumbnail);
 
             $image->move(public_path('images'), $imageName);
-            $user->foto = "{$host}/images/{$thumbnail}";
+            $user->foto = "{$host}/images/{$imageName}";
+            $user->foto_thumbnail = "{$host}/images/{$thumbnail}";
             $user->saveOrFail();
         }
 
@@ -112,4 +115,54 @@ class UsuarioController extends Controller
     {
         //
     }
+    public function removerFotoPerfil(string $id)
+    {
+        try {
+            $user = User::findOrFail($id);
+
+            if ($user->foto) {
+
+                if ($user->foto) {
+                    $hostImagePath = public_path(str_replace(url('/'), '', $user->foto));
+                    if (File::exists($hostImagePath)) {
+                        File::delete($hostImagePath);
+                    }
+                }
+
+                if ($user->foto_thumbnail) {
+                    $hostThumbPath = public_path(str_replace(url('/'), '', $user->foto_thumbnail));
+                    if (File::exists($hostThumbPath)) {
+                        File::delete($hostThumbPath);
+                    }
+                }
+            }
+
+            $user->foto = null;
+            $user->foto_thumbnail = null;
+            $user->saveOrFail();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Foto removida com sucesso!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao remover foto: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    // public function removerFotoPerfil(string $id)
+    // {
+    //     $user = User::findOrFail($id);
+    //     if ($user->foto) {
+    //         File::delete([
+    //             public_path($user->image),
+    //             public_path($user->thumbnail),
+    //         ]);
+    //     }
+    //     $user->foto = null;
+    //     $user->foto_thumbnail = null;
+    //     $user->saveOrFail();
+    // }
 }
