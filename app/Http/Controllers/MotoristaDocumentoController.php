@@ -20,7 +20,36 @@ class MotoristaDocumentoController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'motorista_id' => 'required|integer',
+            'documento' => 'required|string',
+            'arquivo' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048', // 2MB
+        ]);
+
+        $file = $request->file('arquivo');
+
+        // Nome único
+        $fileName = time() . '_' . $file->getClientOriginalName();
+
+        // Salvar arquivo
+        $path = $file->storeAs('motorista_documentos', $fileName);
+
+        // Salvar no banco
+        $documento = MotoristaDocumento::create([
+            'motorista_id' => $request->motorista_id,
+            'documento' => $request->documento,
+            'name' => $file->getClientOriginalName(),
+            'type' => $file->extension(),
+            'mime_type' => $file->getMimeType(),
+            'size' => $file->getSize(),
+            'path' => $path,
+            'status' => 'ativo',
+        ]);
+
+        return response()->json([
+            'message' => 'Arquivo enviado com sucesso',
+            'data' => $documento
+        ], 201);
     }
 
     /**
