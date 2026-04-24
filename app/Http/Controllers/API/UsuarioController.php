@@ -186,7 +186,6 @@ class UsuarioController extends Controller
 
     public function usuariosArquivados()
     {
-        // return $users = User::withTrashed()->orderBy('id', 'DESC')->paginate();
         return $users = User::onlyTrashed()
             ->latest('updated_at')
             ->paginate();
