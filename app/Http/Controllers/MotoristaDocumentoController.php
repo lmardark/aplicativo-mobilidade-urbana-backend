@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MotoristaDocumento;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 
 class MotoristaDocumentoController extends Controller
@@ -12,7 +13,7 @@ class MotoristaDocumentoController extends Controller
      */
     public function index()
     {
-        //
+        return MotoristaDocumento::paginate();
     }
 
     /**
@@ -55,9 +56,9 @@ class MotoristaDocumentoController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(MotoristaDocumento $motoristaDocumento)
+    public function show($motoristaDocumentoId)
     {
-        //
+        return MotoristaDocumento::where('motorista_id', $motoristaDocumentoId)->paginate();
     }
 
     /**
@@ -71,8 +72,26 @@ class MotoristaDocumentoController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(MotoristaDocumento $motoristaDocumento)
+    public function destroy(string $motoristaDocumentoId)
     {
-        //
+        $documento = MotoristaDocumento::find($motoristaDocumentoId);
+
+        if (!$documento) {
+            return response()->json([
+                'message' => 'Documento não encontrado'
+            ], 404);
+        }
+
+        // Verifica e deleta o arquivo no storage PRIVATE (local)
+        if ($documento->path && Storage::disk('local')->exists($documento->path)) {
+            Storage::disk('local')->delete($documento->path);
+        }
+
+        // Remove do banco (soft delete)
+        $documento->delete();
+
+        return response()->json([
+            'message' => 'Documento removido com sucesso'
+        ]);
     }
 }
