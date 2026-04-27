@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
             'cpf' => "01149897295",
             'foto' => "https://api.pen6.app/images/1775760201_thumbnail_WhatsApp Image 2026-04-09 at 14.42.59.jpeg",
             'type' => "gestao",
-            'status' => "aprovado"
+            'status' => "ativo"
         ]);
     }
 }

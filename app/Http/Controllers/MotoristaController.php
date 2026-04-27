@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Motorista;
+use App\Models\MotoristaVeiculo;
 use Illuminate\Http\Request;
 
 class MotoristaController extends Controller
@@ -12,7 +13,7 @@ class MotoristaController extends Controller
      */
     public function index()
     {
-        //
+        return Motorista::with('user')->paginate();
     }
 
     /**
@@ -20,23 +21,34 @@ class MotoristaController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // return $request->input();
+        $veiculo =  Motorista::create($request->input());
+        return response()->json([
+            'success' => true,
+            'message' => 'Registro realizado com sucesso',
+            'data' => $veiculo
+        ], 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Motorista $motorista)
+    public function show($motoristaid)
     {
-        //
+        return Motorista::with('user')->findOrFail($motoristaid);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Motorista $motorista)
+    public function update(Request $request, $motoristaid)
     {
-        //
+        $veiculo = Motorista::findOrFail($motoristaid)->update($request->input());
+        return response()->json([
+            'success' => true,
+            'message' => 'Registro atualizado com sucesso',
+            'data' => $veiculo
+        ], 201);
     }
 
     /**
@@ -45,5 +57,21 @@ class MotoristaController extends Controller
     public function destroy(Motorista $motorista)
     {
         //
+    }
+
+    public function motoristaAdicionarVeiculo(Request $request)
+    {
+        $motoristaVeiculo = MotoristaVeiculo::create($request->input());
+        return response()->json([
+            'success' => true,
+            'message' => 'Registro realizado com sucesso',
+            'data' => $motoristaVeiculo
+        ], 201);
+    }
+
+    public function motoristaVeiculos($motoristaid)
+    {
+        return MotoristaVeiculo::with('motorista', 'veiculo')
+            ->where('motorista_id', $motoristaid)->paginate();
     }
 }
