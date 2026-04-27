@@ -23,7 +23,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'email',
     'foto',
     'foto_thumbnail',
-    "type",
     'status',
     'password'
 ])]

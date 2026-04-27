@@ -21,7 +21,6 @@ class MotoristaController extends Controller
      */
     public function store(Request $request)
     {
-        // return $request->input();
         $veiculo =  Motorista::create($request->input());
         return response()->json([
             'success' => true,
@@ -59,7 +58,7 @@ class MotoristaController extends Controller
         //
     }
 
-    public function motoristaAdicionarVeiculo(Request $request)
+    public function adicionarVeiculoAoMotorista(Request $request)
     {
         $motoristaVeiculo = MotoristaVeiculo::create($request->input());
         return response()->json([

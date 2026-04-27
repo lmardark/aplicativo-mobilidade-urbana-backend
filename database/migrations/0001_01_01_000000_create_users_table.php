@@ -22,7 +22,6 @@ return new class extends Migration
             $table->string('foto')->nullable();
             $table->string('foto_thumbnail')->nullable();
             $table->rememberToken();
-            $table->string('type');
             $table->string('status');
             $table->string('password');
             $table->timestamps();

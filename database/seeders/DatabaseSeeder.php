@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Motorista;
 use App\Models\User;
+use App\Models\Veiculo;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,17 +17,34 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'my name',
+        $user = User::factory()->create([
+            'name' => 'Diogo Guimarães',
             'data_nascimento' => '2022-04-11',
             'telefone' => '69981400661',
             'email' => 'test@example.com',
             'cpf' => "01149897295",
-            'foto' => "https://api.pen6.app/images/1775760201_thumbnail_WhatsApp Image 2026-04-09 at 14.42.59.jpeg",
-            'type' => "gestao",
+            'foto' => "",
+            'foto_thumbnail' => "",
             'status' => "ativo"
+        ]);
+        Motorista::factory()->create([
+            'user_id' => $user->id,
+            'cnh_numero' => '2022-04-11',
+            'cnh_categoria' => 'ABC',
+            'cnh_expiracao' => '04-12-2029',
+            'ear' => true,
+        ]);
+        Veiculo::factory()->create([
+            'marca' => 'hyundai',
+            'modelo' => 'hb20 sedan',
+            'ano_fabricacao' => 2016,
+            'ano_modelo' => 2016,
+            'cor' => 'preto',
+            'placa' => 'NCH9110',
+            'renavam' => '12345678910',
+            'categoria' => 'pop',
+            'status' => 'pendente',
+            'uf' => 'RO',
         ]);
     }
 }

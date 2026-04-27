@@ -30,7 +30,7 @@ Route::middleware('auth:jwt')->group(function () {
     Route::get('motorista-veiculos/{motoristaId}', [MotoristaController::class, 'motoristaVeiculos']);
 
     Route::apiResource('/motoristas', MotoristaController::class);
-    Route::post('motorista-adicionar-veiculo', [MotoristaController::class, 'motoristaAdicionarVeiculo']);
+    Route::post('adicionar-veiculo-ao-motorista', [MotoristaController::class, 'adicionarVeiculoAoMotorista']);
 
     Route::apiResource('/motorista-documentos', MotoristaDocumentoController::class);
     Route::get('/user', function (Request $request) {

@@ -62,7 +62,7 @@ class VeiculosController extends Controller
     public function veiculoPorPlaca($placa)
     {
 
-        return Veiculo::where("placa", "like", "%$placa%")->get();
+        return Veiculo::where('placa', 'ilike', "%{$placa}%")->get();
         // $dados = DB::table('vaeiculos')
         //     ->select('vaeiculos.id as veiculo_id', 'motoristas.nome', 'vaeiculos.data_midia', 'vaeiculos.titulo', 'vaeiculos.cliente_id', 'motoristas.cnpj', 'vaeiculos.status_id', 'vaeiculos.empresa_contrato_id', 'empresa_contratos.numero_contrato', 'status.nome as status', 'vaeiculos.valor')
         //     ->leftJoin('motoristas', 'vaeiculos.cliente_id', '=', 'motoristas.id')
