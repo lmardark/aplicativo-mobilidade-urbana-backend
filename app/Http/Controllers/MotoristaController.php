@@ -13,7 +13,7 @@ class MotoristaController extends Controller
      */
     public function index()
     {
-        return Motorista::with('user')->paginate();
+        return Motorista::with('user')->orderBy('id', 'DESC')->paginate();
     }
 
     /**

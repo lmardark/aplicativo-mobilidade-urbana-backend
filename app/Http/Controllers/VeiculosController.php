@@ -13,7 +13,7 @@ class VeiculosController extends Controller
      */
     public function index()
     {
-        return Veiculo::paginate();
+        return Veiculo::orderBy('id', 'DESC')->paginate();
     }
 
     /**
