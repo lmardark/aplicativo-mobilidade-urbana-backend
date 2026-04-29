@@ -26,7 +26,7 @@ class MotoristaDocumentoController extends Controller
     {
         $request->validate([
             'motorista_id' => 'required|integer',
-            'documento' => 'required|string',
+            'tipo_documento' => 'required|string',
             'arquivo' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048', // 2MB
         ]);
 
@@ -39,9 +39,9 @@ class MotoristaDocumentoController extends Controller
         $path = $file->storeAs('motorista_documentos', $fileName);
 
         // Salvar no banco
-        $documento = MotoristaDocumento::create([
+        $motoristaDocumento = MotoristaDocumento::create([
             'motorista_id' => $request->motorista_id,
-            'documento' => $request->documento,
+            'tipo_documento' => $request->tipo_documento,
             'name' => $file->getClientOriginalName(),
             'type' => $file->extension(),
             'mime_type' => $file->getMimeType(),
@@ -52,7 +52,7 @@ class MotoristaDocumentoController extends Controller
 
         return response()->json([
             'message' => 'Arquivo enviado com sucesso',
-            'data' => $documento
+            'data' => $motoristaDocumento
         ], 201);
     }
 
@@ -77,24 +77,34 @@ class MotoristaDocumentoController extends Controller
      */
     public function destroy(string $motoristaDocumentoId)
     {
-        $documento = MotoristaDocumento::find($motoristaDocumentoId);
+        $motoristaDocumento = MotoristaDocumento::find($motoristaDocumentoId);
 
-        if (!$documento) {
+        if (!$motoristaDocumento) {
             return response()->json([
                 'message' => 'Documento não encontrado'
             ], 404);
         }
 
         // Verifica e deleta o arquivo no storage PRIVATE (local)
-        if ($documento->path && Storage::disk('local')->exists($documento->path)) {
-            Storage::disk('local')->delete($documento->path);
+        if ($motoristaDocumento->path && Storage::disk('local')->exists($motoristaDocumento->path)) {
+            Storage::disk('local')->delete($motoristaDocumento->path);
         }
 
         // Remove do banco (soft delete)
-        $documento->delete();
+        $motoristaDocumento->delete();
 
         return response()->json([
             'message' => 'Documento removido com sucesso'
+        ]);
+    }
+
+    public function mudarStatusDocumento(Request $request, $motoristaDocumentoId)
+    {
+        $motoristaDocumento = MotoristaDocumento::find($motoristaDocumentoId);
+        $motoristaDocumento->status = $request->status;
+        $motoristaDocumento->saveOrFail();
+        return response()->json([
+            'message' => 'Status do documento alterado com sucesso'
         ]);
     }
 }

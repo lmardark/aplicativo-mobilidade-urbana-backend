@@ -33,6 +33,8 @@ Route::middleware('auth:jwt')->group(function () {
     Route::post('adicionar-veiculo-ao-motorista', [MotoristaController::class, 'adicionarVeiculoAoMotorista']);
 
     Route::apiResource('/motorista-documentos', MotoristaDocumentoController::class);
+    Route::put('mudar-status-documento/{MotoristaDocumentoId}', [MotoristaDocumentoController::class, 'mudarStatusDocumento']);
+
     Route::get('/user', function (Request $request) {
         /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard */
         $guard = auth('jwt');

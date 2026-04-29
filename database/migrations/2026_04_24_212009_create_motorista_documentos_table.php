@@ -14,13 +14,14 @@ return new class extends Migration
         Schema::create('motorista_documentos', function (Blueprint $table) {
             $table->id();
             $table->integer('motorista_id');
-            $table->string('documento');
+            $table->string('tipo_documento');
             $table->string('name');
             $table->string('type');
             $table->string('mime_type');
             $table->bigInteger('size');
             $table->string('path');
             $table->string('status');
+            $table->longText('observacao');
             $table->timestamps();
             $table->softDeletes();
         });
