@@ -39,7 +39,7 @@ class UsuarioController extends Controller
             "cpf" => $request->cpf,
             "email" => $request->email,
             "foto" => $request->foto,
-            "status" => 'aprovação',
+            "status" => 'ativo',
             "password" => bcrypt($request->password)
         ]);
 
