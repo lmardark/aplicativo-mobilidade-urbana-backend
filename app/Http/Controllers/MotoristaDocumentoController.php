@@ -19,6 +19,9 @@ class MotoristaDocumentoController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
+
+
     public function store(Request $request)
     {
         $request->validate([
@@ -44,7 +47,7 @@ class MotoristaDocumentoController extends Controller
             'mime_type' => $file->getMimeType(),
             'size' => $file->getSize(),
             'path' => $path,
-            'status' => 'ativo',
+            'status' => 'em_analise',
         ]);
 
         return response()->json([
