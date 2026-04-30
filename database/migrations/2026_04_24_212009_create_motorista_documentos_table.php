@@ -21,7 +21,7 @@ return new class extends Migration
             $table->bigInteger('size');
             $table->string('path');
             $table->string('status');
-            $table->longText('observacao');
+            $table->longText('observacao')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
