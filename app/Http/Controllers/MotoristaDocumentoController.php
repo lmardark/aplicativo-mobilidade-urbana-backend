@@ -98,7 +98,7 @@ class MotoristaDocumentoController extends Controller
         ]);
     }
 
-    public function mudarStatusDocumento(Request $request, $motoristaDocumentoId)
+    public function mudarStatusDocumento(Request $request, int $motoristaDocumentoId)
     {
         $motoristaDocumento = MotoristaDocumento::find($motoristaDocumentoId);
         $motoristaDocumento->status = $request->status;
