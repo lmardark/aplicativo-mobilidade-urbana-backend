@@ -5,7 +5,9 @@ use App\Http\Controllers\API\Auth\LogoutController;
 use App\Http\Controllers\API\UsuarioController;
 use App\Http\Controllers\MotoristaController;
 use App\Http\Controllers\MotoristaDocumentoController;
+use App\Http\Controllers\PassageiroController;
 use App\Http\Controllers\VeiculosController;
+use App\Models\Passageiro;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +36,11 @@ Route::middleware('auth:jwt')->group(function () {
 
     Route::apiResource('/motorista-documentos', MotoristaDocumentoController::class);
     Route::put('mudar-status-documento/{MotoristaDocumentoId}', [MotoristaDocumentoController::class, 'mudarStatusDocumento']);
+
+    Route::apiResource('/passageiros', PassageiroController::class);
+    Route::get('passageiros-arquivados', [PassageiroController::class, 'PassageirosArquivados']);
+
+
 
     Route::get('/user', function (Request $request) {
         /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard */

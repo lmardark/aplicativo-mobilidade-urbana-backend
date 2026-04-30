@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Motorista;
 use App\Models\User;
 use App\Models\Veiculo;
+use App\Models\Passageiro;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -45,6 +46,22 @@ class DatabaseSeeder extends Seeder
             'categoria' => 'pop',
             'status' => 'pendente',
             'uf' => 'RO',
+        ]);
+
+        $passageiro = User::factory()->create([
+            'name' => 'Passageiro Sobrenome',
+            'data_nascimento' => '2022-04-12',
+            'telefone' => '69981400662',
+            'email' => 'test@test.com',
+            'cpf' => "01149897296",
+            'foto' => "",
+            'foto_thumbnail' => "",
+            'status' => "ativo"
+        ]);
+
+        Passageiro::factory()->create([
+            'user_id' => $passageiro->id,
+            'media_avaliacao' => 4,
         ]);
     }
 }

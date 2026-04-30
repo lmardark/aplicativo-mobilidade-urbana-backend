@@ -12,7 +12,7 @@ class PassageiroController extends Controller
      */
     public function index()
     {
-        //
+        return Passageiro::with('user')->paginate();
     }
 
     /**
@@ -45,5 +45,12 @@ class PassageiroController extends Controller
     public function destroy(Passageiro $passageiro)
     {
         //
+    }
+
+    public function passageirosArquivados()
+    {
+        return  Passageiro::onlyTrashed()
+            ->latest('updated_at')
+            ->paginate();
     }
 }

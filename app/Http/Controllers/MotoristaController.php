@@ -32,7 +32,7 @@ class MotoristaController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($motoristaid)
+    public function show(int $motoristaid)
     {
         return Motorista::with('user')->findOrFail($motoristaid);
     }
@@ -40,7 +40,7 @@ class MotoristaController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $motoristaid)
+    public function update(Request $request, int $motoristaid)
     {
         $veiculo = Motorista::findOrFail($motoristaid)->update($request->input());
         return response()->json([
@@ -68,9 +68,9 @@ class MotoristaController extends Controller
         ], 201);
     }
 
-    public function motoristaVeiculos($motoristaid)
+    public function motoristaVeiculos(int $motoristaid)
     {
-        return MotoristaVeiculo::with('motorista', 'veiculo')
+        return MotoristaVeiculo::with(['motorista', 'veiculo'])
             ->where('motorista_id', $motoristaid)->paginate();
     }
 }
