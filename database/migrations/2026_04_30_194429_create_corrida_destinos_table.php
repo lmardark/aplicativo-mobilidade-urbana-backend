@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('corria_destinos', function (Blueprint $table) {
+        Schema::create('corrida_destinos', function (Blueprint $table) {
             $table->id();
 
             // Relacionamento com a viagem
@@ -34,10 +34,10 @@ return new class extends Migration
             $table->decimal('longitude', 10, 7);
 
             // Distância até o próximo ponto
-            $table->decimal('distancia_ate_proximo', 10, 2)->nullable();
+            $table->decimal('distancia_ate_proximo_destino', 10, 2)->nullable();
 
             // Timestamp
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamps();
 
             // Índices importantes
             $table->index(['corrida_id', 'ordem']);
@@ -50,6 +50,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('corria_destinos');
+        Schema::dropIfExists('corrida_destinos');
     }
 };

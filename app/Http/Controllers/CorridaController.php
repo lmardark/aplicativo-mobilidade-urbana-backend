@@ -12,7 +12,15 @@ class CorridaController extends Controller
      */
     public function index()
     {
-        return Corrida::paginate();
+        return Corrida::with(
+            [
+                'motorista.user',
+                'passageiro.user',
+                'veiculo',
+                'corrida_destinos',
+                'corrida_financeiro.corrida_desconto',
+            ]
+        )->paginate();
     }
 
     /**

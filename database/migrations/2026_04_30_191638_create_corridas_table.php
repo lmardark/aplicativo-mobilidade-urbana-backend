@@ -13,13 +13,25 @@ return new class extends Migration
     {
         Schema::create('corridas', function (Blueprint $table) {
             $table->id();
-
             // Relacionamentos
             // $table->foreignId('motorista_id')->constrained('users')->cascadeOnDelete();
             // $table->foreignId('passageiro_id')->constrained('users')->cascadeOnDelete();
+            $table->string('codigo_corrida');
+
+            $table->enum('tipo_corrida', [
+                'pop',
+                'comfort',
+                'premium',
+            ])->nullable();
+
+
             $table->integer('motorista_id');
             $table->integer('passageiro_id');
             $table->integer('veiculo_id');
+            $table->integer('tarifa_id');
+            $table->integer('cidade_id');
+            $table->decimal('multiplicador_dinamico', 10, 2)->nullable();
+            $table->timestamp('tempo_chegada_origem')->nullable();
 
             // Status da viagem
             $table->enum('status', [
@@ -27,8 +39,16 @@ return new class extends Migration
                 'aceita',
                 'em_andamento',
                 'finalizada',
-                'cancelada'
+                'cancelada',
+                'em_busca',
+                'motorista_chegou',
             ])->default('solicitada');
+
+            $table->enum('cancelado_por', [
+                'motorista',
+                'passageiro',
+                'sistema',
+            ])->nullable();
 
             // Tempos
             $table->timestamp('tempo_solicitacao')->nullable();
@@ -39,10 +59,6 @@ return new class extends Migration
             // Dados da viagem
             $table->decimal('distancia_total', 10, 2)->nullable(); // km
 
-            // Valores
-            $table->decimal('valor_total', 10, 2)->nullable();
-            $table->decimal('valor_motorista', 10, 2)->nullable();
-            $table->decimal('valor_plataforma', 10, 2)->nullable();
 
             // Método de pagamento
             $table->enum('metodo_pagamento', [
@@ -51,6 +67,9 @@ return new class extends Migration
                 'pix'
             ])->nullable();
             $table->timestamps();
+            // INDEX motorista_id
+            // INDEX passageiro_id
+            // INDEX status
         });
     }
 

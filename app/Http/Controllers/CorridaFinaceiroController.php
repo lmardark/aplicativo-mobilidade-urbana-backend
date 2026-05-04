@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CorridaFinaceiro;
+use App\Models\CorridaFinanceiro;
 use Illuminate\Http\Request;
 
 class CorridaFinaceiroController extends Controller

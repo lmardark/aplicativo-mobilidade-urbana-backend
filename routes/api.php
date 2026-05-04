@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\Auth\LoginController;
 use App\Http\Controllers\API\Auth\LogoutController;
 use App\Http\Controllers\API\UsuarioController;
+use App\Http\Controllers\CorridaController;
 use App\Http\Controllers\MotoristaController;
 use App\Http\Controllers\MotoristaDocumentoController;
 use App\Http\Controllers\PassageiroController;
@@ -39,6 +40,8 @@ Route::middleware('auth:jwt')->group(function () {
 
     Route::apiResource('/passageiros', PassageiroController::class);
     Route::get('passageiros-arquivados', [PassageiroController::class, 'PassageirosArquivados']);
+
+    Route::apiResource('/corridas', CorridaController::class);
 
 
 
