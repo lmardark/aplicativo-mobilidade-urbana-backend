@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Corrida;
+use App\Services\SimularCorridaNegociadaService;
 use Illuminate\Http\Request;
 
 class CorridaController extends Controller
@@ -53,5 +54,17 @@ class CorridaController extends Controller
     public function destroy(Corrida $corrida)
     {
         //
+    }
+
+    public function simularCorridaNegociada(Corrida $corrida)
+    {
+        $service = new SimularCorridaNegociadaService();
+
+        $resultado = $service->executar([
+            'distancia_km' => 7.8,
+            'tempo_min' => 16,
+            'diferenca_negociada' => 2.68,
+        ]);
+        return response()->json($resultado);
     }
 }

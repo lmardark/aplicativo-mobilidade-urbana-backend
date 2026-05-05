@@ -42,8 +42,8 @@ Route::middleware('auth:jwt')->group(function () {
     Route::get('passageiros-arquivados', [PassageiroController::class, 'PassageirosArquivados']);
 
     Route::apiResource('/corridas', CorridaController::class);
-
-
+    Route::get('corridas-negociada', [CorridaController::class, 'simularCorridaNegociada']);
+    Route::apiResource('/corridas-negociacoes', CorridaController::class);
 
     Route::get('/user', function (Request $request) {
         /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard */
