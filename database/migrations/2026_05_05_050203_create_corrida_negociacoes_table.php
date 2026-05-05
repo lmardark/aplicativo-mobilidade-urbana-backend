@@ -13,6 +13,19 @@ return new class extends Migration
     {
         Schema::create('corrida_negociacoes', function (Blueprint $table) {
             $table->id();
+            $table->integer('corrida_id');
+            $table->integer('usuario_id');
+            $table->enum('tipo_usuario', [
+                'motorista',
+                'passageiro',
+            ]);
+            $table->decimal('valor_proposto', 10, 2)->nullable();
+            $table->timestamp('expira_em')->nullable();
+            $table->enum('status', [
+                'pendente',
+                'aceito',
+                'recusado'
+            ]);
             $table->timestamps();
         });
     }

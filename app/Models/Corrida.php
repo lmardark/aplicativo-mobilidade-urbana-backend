@@ -11,7 +11,8 @@ class Corrida extends Model
 
     protected $fillable = [
         'codigo_corrida',
-        'tipo_corrida',
+        'produto_id',
+        // 'tipo_corrida',
         'motorista_id',
         'passageiro_id',
         'cidade_id',

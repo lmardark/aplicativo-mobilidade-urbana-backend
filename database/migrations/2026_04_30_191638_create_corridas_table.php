@@ -18,11 +18,13 @@ return new class extends Migration
             // $table->foreignId('passageiro_id')->constrained('users')->cascadeOnDelete();
             $table->string('codigo_corrida');
 
-            $table->enum('tipo_corrida', [
-                'pop',
-                'comfort',
-                'premium',
-            ])->nullable();
+            $table->integer('produto_id');
+
+            // $table->enum('tipo_corrida', [
+            //     'pop',
+            //     'negociada',
+            //     'pop express',
+            // ])->nullable();
 
 
             $table->integer('motorista_id');
@@ -66,6 +68,7 @@ return new class extends Migration
                 'cartao',
                 'pix'
             ])->nullable();
+            $table->decimal('valor_negociado_final', 10, 2)->nullable();
             $table->timestamps();
             // INDEX motorista_id
             // INDEX passageiro_id

@@ -20,7 +20,7 @@ class TarifaController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        Tarifa::create([]);
     }
 
     /**

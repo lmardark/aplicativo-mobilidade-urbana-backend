@@ -20,6 +20,7 @@ class Tarifa extends Model
         'taxa_plataforma_valor_percentual',
         'ativo',
         'categoria',
+        'tipo_corrida',
         'horario_inicio',
         'horario_fim',
         'multiplicador_dinamico'

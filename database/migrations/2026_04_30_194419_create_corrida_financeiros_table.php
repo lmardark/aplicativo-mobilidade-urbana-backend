@@ -34,6 +34,11 @@ return new class extends Migration
             $table->decimal('taxa_plataforma_valor_percentual', 10, 2)->nullable();
             $table->decimal('percentual_plataforma', 5, 2)->nullable(); // ex: 15.50%
 
+            $table->decimal('valor_base_calculado', 10, 2)->nullable();
+            $table->decimal('valor_ajuste_negociado', 10, 2)->nullable();
+
+            // valor_motorista = bruto antes de ajustes
+            // valor_liquido_motorista = final
             $table->decimal('valor_motorista', 10, 2)->nullable();
             $table->decimal('valor_liquido_motorista', 10, 2)->nullable();
 

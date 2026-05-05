@@ -21,6 +21,8 @@ class CorridaFinanceiro extends Model
         'valor_pago_passageiro',
         'taxa_plataforma_valor_percentual',
         'percentual_plataforma',
+        'valor_base_calculado',
+        'valor_ajuste_negociado',
         'valor_motorista',
         'valor_liquido_motorista',
         'metodo_pagamento'

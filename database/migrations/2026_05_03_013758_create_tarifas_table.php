@@ -27,6 +27,12 @@ return new class extends Migration
                 'premium',
             ])->nullable();
 
+            $table->enum('tipo_corrida', [
+                'pop',
+                'pop express',
+                'negociada',
+            ])->nullable();
+
             $table->timestamp('horario_inicio')->nullable();
             $table->timestamp('horario_fim')->nullable();
             $table->integer('multiplicador_dinamico')->nullable();
