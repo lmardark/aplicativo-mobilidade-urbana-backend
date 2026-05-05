@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('tarifas', function (Blueprint $table) {
             $table->id();
+            $table->integer('cidade_id')->nullable();
             $table->string('nome')->nullable();
             $table->decimal('tarifa_base', 10, 2)->nullable();
             $table->decimal('valor_por_km', 10, 2)->nullable();
@@ -20,7 +21,6 @@ return new class extends Migration
             $table->decimal('valor_por_minuto_espera', 10, 2)->nullable();
 
             $table->decimal('taxa_plataforma_valor_percentual', 10, 2)->nullable();
-            $table->integer('cidade_id')->nullable();
 
             $table->enum('categoria', [
                 'economico',

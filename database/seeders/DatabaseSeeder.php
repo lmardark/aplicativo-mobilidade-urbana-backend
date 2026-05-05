@@ -90,6 +90,7 @@ class DatabaseSeeder extends Seeder
         $valorMotorista = $valorPago - $taxaPlataforma;
 
         $corrida = Corrida::factory()->create([
+            'codigo_corrida' => "495848",
             'motorista_id' => $motorista->id,
             'passageiro_id' => $passageiro->id,
             'veiculo_id' => Veiculo::inRandomOrder()->first()->id ?? 1,

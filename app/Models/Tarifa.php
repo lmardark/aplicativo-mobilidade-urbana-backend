@@ -10,6 +10,7 @@ class Tarifa extends Model
     use HasFactory;
 
     protected $fillable = [
+        'cidade_id',
         'nome',
         'tarifa_base',
         'valor_por_km',
@@ -18,7 +19,6 @@ class Tarifa extends Model
         'taxa_plataforma_valor',
         'taxa_plataforma_valor_percentual',
         'ativo',
-        'cidade_id',
         'categoria',
         'horario_inicio',
         'horario_fim',

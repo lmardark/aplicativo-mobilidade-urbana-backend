@@ -17,7 +17,6 @@ class Corrida extends Model
         'cidade_id',
         'veiculo_id',
         'tarifa_id',
-        'cidade_id',
         'multiplicador_dinamico',
         'tempo_chegada_origem',
         'status',
