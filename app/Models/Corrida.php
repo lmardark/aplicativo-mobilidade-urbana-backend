@@ -12,7 +12,7 @@ class Corrida extends Model
     protected $fillable = [
         'codigo_corrida',
         'produto_id',
-        // 'tipo_corrida',
+        // 'dinamica_regioes',
         'motorista_id',
         'passageiro_id',
         'cidade_id',
@@ -20,7 +20,8 @@ class Corrida extends Model
         'tarifa_id',
         'multiplicador_dinamico',
         'tempo_chegada_origem',
-        'status',
+        'corrida_status',
+        'negociacao_status',
         'cancelado_por',
         'tempo_solicitacao',
         'tempo_solicitacao',
@@ -28,6 +29,12 @@ class Corrida extends Model
         'tempo_inicio',
         'tempo_final',
         'distancia_total',
+        'valor_estimado_inicial',
+        'valor_negociado_final',
+        'motivo_cancelamento',
+        'distancia_ate_motorista',
+        'metodo_pagamento',
+        'pagamento_status',
     ];
 
     public function corrida_financeiro()

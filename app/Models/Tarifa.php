@@ -15,6 +15,7 @@ class Tarifa extends Model
         'tarifa_base',
         'valor_por_km',
         'valor_por_minuto',
+        'dias_semana',
         'valor_por_minuto_espera',
         'taxa_plataforma_valor',
         'taxa_plataforma_valor_percentual',
@@ -23,6 +24,7 @@ class Tarifa extends Model
         'tipo_corrida',
         'horario_inicio',
         'horario_fim',
-        'multiplicador_dinamico'
+        'multiplicador_dinamico',
+        'raio_busca_motorista_km',
     ];
 }

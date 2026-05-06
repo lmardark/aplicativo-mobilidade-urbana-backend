@@ -17,6 +17,7 @@ return new class extends Migration
             // Relacionamento com a viagem
             // $table->foreignId('corrida_id')->constrained('viagens')->cascadeOnDelete();
             $table->integer('corrida_id');
+            $table->string('nome_local');
 
             // Tipo do ponto
             $table->enum('tipo', [

@@ -10,7 +10,7 @@ class ProdutoCorrida extends Model
         'nome',
         'codigo',
         'categoria_veiculo',
-        'modo_precificacao',
+        'estrategia_precificacao',
         'aceita_multiplas_categorias',
     ];
 }

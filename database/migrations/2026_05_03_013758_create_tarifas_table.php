@@ -18,6 +18,8 @@ return new class extends Migration
             $table->decimal('tarifa_base', 10, 2)->nullable();
             $table->decimal('valor_por_km', 10, 2)->nullable();
             $table->decimal('valor_por_minuto', 10, 2)->nullable();
+            // exemplo '1,2,3,4,5'
+            $table->string('dias_semana')->nullable();
             $table->decimal('valor_por_minuto_espera', 10, 2)->nullable();
 
             $table->decimal('taxa_plataforma_valor_percentual', 10, 2)->nullable();
@@ -35,8 +37,11 @@ return new class extends Migration
 
             $table->timestamp('horario_inicio')->nullable();
             $table->timestamp('horario_fim')->nullable();
-            $table->integer('multiplicador_dinamico')->nullable();
+            $table->boolean('vira_dia')->nullable();
+
+            $table->decimal('raio_busca_motorista_km', 10, 2)->nullable();
             $table->boolean('ativo')->nullable();
+            $table->timestamp('tempo_estimado_chegada_max')->nullable();
             $table->timestamps();
         });
     }

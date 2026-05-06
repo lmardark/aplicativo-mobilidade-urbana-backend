@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('produto_corridas', function (Blueprint $table) {
             $table->id();
+            $table->enum('tipo_corrida', [
+                'pop',
+                'pop express',
+                'negociada',
+            ])->nullable();
             $table->enum('nome', [
                 'Pop',
                 'Electric Pro',
@@ -28,7 +33,7 @@ return new class extends Migration
                 'moto',
                 'eletrico'
             ]);
-            $table->enum('modo_precificacao', [
+            $table->enum('estrategia_precificacao', [
                 'normal',
                 'negociada',
             ]);

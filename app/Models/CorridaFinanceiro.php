@@ -12,6 +12,7 @@ class CorridaFinanceiro extends Model
         'corrida_id',
         'valor_bruto',
         'tarifa_base',
+        'valor_dinamico_aplicado',
         'valor_por_km',
         'valor_por_minuto',
         'valor_por_minuto_espera',

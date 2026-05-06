@@ -18,7 +18,7 @@ return new class extends Migration
             // $table->foreignId('passageiro_id')->constrained('users')->cascadeOnDelete();
             $table->string('codigo_corrida');
 
-            $table->integer('produto_id');
+            $table->integer('produto_id')->nullable();
 
             // $table->enum('tipo_corrida', [
             //     'pop',
@@ -36,7 +36,7 @@ return new class extends Migration
             $table->timestamp('tempo_chegada_origem')->nullable();
 
             // Status da viagem
-            $table->enum('status', [
+            $table->enum('corrida_status', [
                 'solicitada',
                 'aceita',
                 'em_andamento',
@@ -61,6 +61,13 @@ return new class extends Migration
             // Dados da viagem
             $table->decimal('distancia_total', 10, 2)->nullable(); // km
 
+            $table->enum('negociacao_status', [
+                'em_negociacao',
+                'aceita',
+                'recusada',
+                'expirada'
+            ])->nullable();
+
 
             // Método de pagamento
             $table->enum('metodo_pagamento', [
@@ -68,7 +75,18 @@ return new class extends Migration
                 'cartao',
                 'pix'
             ])->nullable();
+
+            $table->enum('pagamento_status', [
+                'pendente',
+                'pago',
+                'estornado',
+                'falhou'
+            ])->nullable();
+
+            $table->decimal('valor_estimado_inicial', 10, 2)->nullable();
             $table->decimal('valor_negociado_final', 10, 2)->nullable();
+            $table->string('motivo_cancelamento')->nullable();
+            $table->decimal('distancia_ate_motorista', 10, 2)->nullable();
             $table->timestamps();
             // INDEX motorista_id
             // INDEX passageiro_id

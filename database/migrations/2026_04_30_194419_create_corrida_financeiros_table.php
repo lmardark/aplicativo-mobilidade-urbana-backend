@@ -19,6 +19,7 @@ return new class extends Migration
 
             $table->decimal('valor_bruto', 10, 2)->nullable();
             $table->decimal('tarifa_base', 10, 2)->nullable();
+            $table->decimal('valor_dinamico_aplicado', 10, 2)->nullable();
 
             $table->decimal('valor_por_km', 10, 2)->nullable();
             $table->decimal('valor_por_minuto', 10, 2)->nullable();
@@ -41,6 +42,8 @@ return new class extends Migration
             // valor_liquido_motorista = final
             $table->decimal('valor_motorista', 10, 2)->nullable();
             $table->decimal('valor_liquido_motorista', 10, 2)->nullable();
+            $table->decimal('valor_repassado_plataforma', 10, 2)->nullable();
+            $table->decimal('subsidiado_plataforma', 10, 2)->nullable();
 
             $table->enum('metodo_pagamento', [
                 'dinheiro',
