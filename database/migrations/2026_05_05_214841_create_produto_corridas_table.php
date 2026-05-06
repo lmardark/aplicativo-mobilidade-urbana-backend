@@ -13,31 +13,23 @@ return new class extends Migration
     {
         Schema::create('produto_corridas', function (Blueprint $table) {
             $table->id();
-            $table->enum('tipo_corrida', [
-                'pop',
-                'pop express',
-                'negociada',
-            ])->nullable();
+
             $table->enum('nome', [
                 'Pop',
                 'Electric Pro',
                 'Negocia'
             ]);
+
             $table->enum('codigo', [
                 'pop',
                 'electric_pro',
-                'Negocia'
+                'negocia'
             ]);
-            $table->enum('categoria_veiculo', [
-                'carro',
-                'moto',
-                'eletrico'
-            ]);
+
             $table->enum('estrategia_precificacao', [
                 'normal',
                 'negociada',
             ]);
-            $table->boolean('aceita_multiplas_categorias')->nullable(0);
             $table->timestamps();
         });
     }

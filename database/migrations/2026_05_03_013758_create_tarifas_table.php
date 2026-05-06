@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('tarifas', function (Blueprint $table) {
             $table->id();
             $table->integer('cidade_id')->nullable();
+            $table->integer('produto_id')->nullable();
             $table->string('nome')->nullable();
             $table->decimal('tarifa_base', 10, 2)->nullable();
             $table->decimal('valor_por_km', 10, 2)->nullable();
@@ -35,10 +36,11 @@ return new class extends Migration
                 'negociada',
             ])->nullable();
 
-            $table->timestamp('horario_inicio')->nullable();
-            $table->timestamp('horario_fim')->nullable();
+            $table->time('horario_inicio')->nullable();
+            $table->time('horario_fim')->nullable();
             $table->boolean('vira_dia')->nullable();
-
+            $table->decimal('valor_minimo_corrida', 10, 2)->nullable();
+            $table->decimal('taxa_plataforma_percentual', 10, 2)->nullable();
             $table->decimal('raio_busca_motorista_km', 10, 2)->nullable();
             $table->boolean('ativo')->nullable();
             $table->timestamp('tempo_estimado_chegada_max')->nullable();

@@ -14,7 +14,12 @@ return new class extends Migration
         Schema::create('produto_categorias', function (Blueprint $table) {
             $table->id();
             $table->boolean('produto_id')->nullable(0);
-            $table->boolean('categoria')->nullable(0);
+            $table->integer('prioridade')->nullable(0);
+            $table->enum('categoria', [
+                'carro',
+                'motor',
+                'eletrico',
+            ]);
             // prioridade
             $table->timestamps();
         });

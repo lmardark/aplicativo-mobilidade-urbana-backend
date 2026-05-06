@@ -36,7 +36,7 @@ return new class extends Migration
             $table->timestamp('tempo_chegada_origem')->nullable();
 
             // Status da viagem
-            $table->enum('corrida_status', [
+            $table->enum('status_corrida', [
                 'solicitada',
                 'aceita',
                 'em_andamento',
@@ -61,7 +61,7 @@ return new class extends Migration
             // Dados da viagem
             $table->decimal('distancia_total', 10, 2)->nullable(); // km
 
-            $table->enum('negociacao_status', [
+            $table->enum('status_negociacao', [
                 'em_negociacao',
                 'aceita',
                 'recusada',
@@ -76,7 +76,7 @@ return new class extends Migration
                 'pix'
             ])->nullable();
 
-            $table->enum('pagamento_status', [
+            $table->enum('status_pagamento', [
                 'pendente',
                 'pago',
                 'estornado',

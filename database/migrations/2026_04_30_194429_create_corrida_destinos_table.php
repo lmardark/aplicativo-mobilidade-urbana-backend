@@ -35,6 +35,7 @@ return new class extends Migration
             $table->decimal('longitude', 10, 7);
 
             // Distância até o próximo ponto
+            $table->decimal('tempo_estimado_ate_proximo', 10, 2)->nullable();
             $table->decimal('distancia_ate_proximo_destino', 10, 2)->nullable();
 
             // Timestamp

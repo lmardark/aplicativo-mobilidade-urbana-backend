@@ -11,6 +11,7 @@ class Tarifa extends Model
 
     protected $fillable = [
         'cidade_id',
+        'produto_id',
         'nome',
         'tarifa_base',
         'valor_por_km',
@@ -24,7 +25,10 @@ class Tarifa extends Model
         'tipo_corrida',
         'horario_inicio',
         'horario_fim',
+        'vira_dia',
+        'valor_minimo_corrida',
         'multiplicador_dinamico',
+        'taxa_plataforma_percentual',
         'raio_busca_motorista_km',
     ];
 }

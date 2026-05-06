@@ -3,14 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ProdutoCorrida extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'nome',
         'codigo',
-        'categoria_veiculo',
         'estrategia_precificacao',
-        'aceita_multiplas_categorias',
     ];
 }

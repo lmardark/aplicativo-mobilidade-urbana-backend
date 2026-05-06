@@ -20,8 +20,8 @@ class Corrida extends Model
         'tarifa_id',
         'multiplicador_dinamico',
         'tempo_chegada_origem',
-        'corrida_status',
-        'negociacao_status',
+        'status_corrida',
+        'status_negociacao',
         'cancelado_por',
         'tempo_solicitacao',
         'tempo_solicitacao',
@@ -34,7 +34,7 @@ class Corrida extends Model
         'motivo_cancelamento',
         'distancia_ate_motorista',
         'metodo_pagamento',
-        'pagamento_status',
+        'status_pagamento',
     ];
 
     public function corrida_financeiro()

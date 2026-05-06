@@ -19,8 +19,13 @@ class TarifaController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        Tarifa::create([]);
+    {   
+
+        Tarifa::create([
+            'cidade_id' => 18,
+            'produto_id' => 1
+            ...
+        ]);
     }
 
     /**
