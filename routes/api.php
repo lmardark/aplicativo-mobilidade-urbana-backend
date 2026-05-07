@@ -46,6 +46,8 @@ Route::middleware('auth:jwt')->group(function () {
     Route::get('corridas-negociada', [CorridaController::class, 'simularCorridaNegociada']);
     Route::apiResource('/corridas-negociacoes', CorridaController::class);
     Route::apiResource('/tarifas', TarifaController::class);
+    Route::get('/buscar-endereco', [CorridaController::class, 'buscarEndereco']);
+    Route::get('/calculos-entre-endereco', [CorridaController::class, 'calculoEntreEnderecos']);
 
     Route::get('/user', function (Request $request) {
         /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard */
