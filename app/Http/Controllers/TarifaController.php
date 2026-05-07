@@ -12,20 +12,20 @@ class TarifaController extends Controller
      */
     public function index()
     {
-        //
+        return Tarifa::with('produto')->get();
     }
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {   
+    {
 
-        Tarifa::create([
-            'cidade_id' => 18,
-            'produto_id' => 1
-            ...
-        ]);
+        // Tarifa::create([
+        //     'cidade_id' => 18,
+        //     'produto_id' => 1
+        //     ...
+        // ]);
     }
 
     /**

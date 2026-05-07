@@ -10,25 +10,25 @@ class Tarifa extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id',
         'cidade_id',
         'produto_id',
-        'nome',
+        'horario_inicio',
+        'horario_fim',
+        'dias_semana',
+        'vira_dia',
+        'valor_minimo_corrida',
         'tarifa_base',
         'valor_por_km',
         'valor_por_minuto',
-        'dias_semana',
         'valor_por_minuto_espera',
-        'taxa_plataforma_valor',
-        'taxa_plataforma_valor_percentual',
-        'ativo',
-        'categoria',
-        'tipo_corrida',
-        'horario_inicio',
-        'horario_fim',
-        'vira_dia',
-        'valor_minimo_corrida',
-        'multiplicador_dinamico',
         'taxa_plataforma_percentual',
         'raio_busca_motorista_km',
+        'ativo',
     ];
+
+    public function produto()
+    {
+        return $this->belongsTo(ProdutoCorrida::class, 'produto_id');
+    }
 }

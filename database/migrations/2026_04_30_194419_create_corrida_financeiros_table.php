@@ -32,8 +32,9 @@ return new class extends Migration
 
             $table->decimal('valor_pago_passageiro', 10, 2)->nullable();
 
-            $table->decimal('taxa_plataforma_valor_percentual', 10, 2)->nullable();
-            $table->decimal('percentual_plataforma', 5, 2)->nullable(); // ex: 15.50%
+
+            $table->decimal('taxa_plataforma_valor', 5, 2)->nullable();
+            $table->decimal('taxa_plataforma_percentual', 5, 2)->nullable();
 
             $table->decimal('valor_base_calculado', 10, 2)->nullable();
             $table->decimal('valor_ajuste_negociado', 10, 2)->nullable();

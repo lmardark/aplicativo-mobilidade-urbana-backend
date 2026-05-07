@@ -7,6 +7,7 @@ use App\Http\Controllers\CorridaController;
 use App\Http\Controllers\MotoristaController;
 use App\Http\Controllers\MotoristaDocumentoController;
 use App\Http\Controllers\PassageiroController;
+use App\Http\Controllers\TarifaController;
 use App\Http\Controllers\VeiculosController;
 use App\Models\Passageiro;
 use Illuminate\Http\Request;
@@ -44,6 +45,7 @@ Route::middleware('auth:jwt')->group(function () {
     Route::apiResource('/corridas', CorridaController::class);
     Route::get('corridas-negociada', [CorridaController::class, 'simularCorridaNegociada']);
     Route::apiResource('/corridas-negociacoes', CorridaController::class);
+    Route::apiResource('/tarifas', TarifaController::class);
 
     Route::get('/user', function (Request $request) {
         /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard */

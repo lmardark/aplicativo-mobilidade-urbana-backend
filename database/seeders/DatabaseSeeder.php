@@ -92,33 +92,22 @@ class DatabaseSeeder extends Seeder
         Tarifa::factory()->create([
             'cidade_id' => 18,
             'produto_id' => 1, // Negocia
-
             'horario_inicio' => '00:00:00',
-
             'dias_semana' => json_encode([1, 2, 3, 4, 5, 6, 7]),
-
             'horario_fim' => '23:59:59',
-
             'vira_dia' => false,
-
             // Regras mínimas
             'valor_minimo_corrida' => 8.00,
-
             // Formação de preço
+            // tarifa_base pq é praticamente km + tempo + negociação
             'tarifa_base' => 0,
-
             'valor_por_km' => 1.55,
-
             'valor_por_minuto' => 0.28,
-
             'valor_por_minuto_espera' => 0.30,
-
             // Plataforma
             'taxa_plataforma_percentual' => 6.00,
-
             // Busca
             'raio_busca_motorista_km' => 5,
-
             'ativo' => true,
         ]);
 
@@ -135,7 +124,7 @@ class DatabaseSeeder extends Seeder
 
         // $valorBruto = $tarifa->tarifa_base + $valorDistancia + $valorTempo + $valorEspera;
         // $valorPago = max(0, $valorBruto - $desconto);
-        // $taxaPlataforma = ($valorPago * $tarifa->taxa_plataforma_valor_percentual) / 100;
+        // $taxaPlataforma = ($valorPago * $tarifa->taxa_plataforma_percentual) / 100;
         // $valorMotorista = $valorPago - $taxaPlataforma;
 
         // $corrida = Corrida::factory()->create([
@@ -183,7 +172,7 @@ class DatabaseSeeder extends Seeder
         //     'valor_descontos' => $valorDesconto,
         //     'valor_pago_passageiro' => $valorTotalPassageiro,
         //     'percentual_plataforma' => $percentualPlataforma,
-        //     'taxa_plataforma_valor_percentual' => $valorTaxaPlataforma,
+        //     'taxa_plataforma_percentual' => $valorTaxaPlataforma,
         //     'valor_motorista' => $valorLiquidoMotorista,
         //     'valor_liquido_motorista' => $valorLiquidoMotorista,
         // ]);

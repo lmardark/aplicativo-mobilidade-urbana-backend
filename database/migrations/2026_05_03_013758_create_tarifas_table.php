@@ -15,26 +15,12 @@ return new class extends Migration
             $table->id();
             $table->integer('cidade_id')->nullable();
             $table->integer('produto_id')->nullable();
-            $table->string('nome')->nullable();
             $table->decimal('tarifa_base', 10, 2)->nullable();
             $table->decimal('valor_por_km', 10, 2)->nullable();
             $table->decimal('valor_por_minuto', 10, 2)->nullable();
             // exemplo '1,2,3,4,5'
             $table->string('dias_semana')->nullable();
             $table->decimal('valor_por_minuto_espera', 10, 2)->nullable();
-
-            $table->decimal('taxa_plataforma_valor_percentual', 10, 2)->nullable();
-
-            $table->enum('categoria', [
-                'economico',
-                'premium',
-            ])->nullable();
-
-            $table->enum('tipo_corrida', [
-                'pop',
-                'pop express',
-                'negociada',
-            ])->nullable();
 
             $table->time('horario_inicio')->nullable();
             $table->time('horario_fim')->nullable();
@@ -43,7 +29,6 @@ return new class extends Migration
             $table->decimal('taxa_plataforma_percentual', 10, 2)->nullable();
             $table->decimal('raio_busca_motorista_km', 10, 2)->nullable();
             $table->boolean('ativo')->nullable();
-            $table->timestamp('tempo_estimado_chegada_max')->nullable();
             $table->timestamps();
         });
     }
