@@ -52,11 +52,13 @@ Route::middleware('auth:jwt')->group(function () {
     // Route::get('corridas-motorista-para-origem', [CorridaController::class, 'motoristaParaOrigem']);
 
 
+
+
+
     // /calculo
     Route::prefix('estimativa')->group(function () {
         // /calculo/rota/estimada
-        Route::get('rota/motorista-origem', [EstimativasController::class, 'estimativaRotaMotoristaParaOrigem']);
-        Route::get('rota/origem-destino', [EstimativasController::class, 'estimativaRotaOrigemDestino']);
+        Route::get('rota/distancia', [EstimativasController::class, 'estimarRota']);
         /**
          * /users GET index
          * /users/{id} GET show
