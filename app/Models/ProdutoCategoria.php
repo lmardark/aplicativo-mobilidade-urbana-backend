@@ -13,4 +13,9 @@ class ProdutoCategoria extends Model
         'prioridade',
         'categoria',
     ];
+
+    public function produto()
+    {
+        return $this->belongsTo(ProdutosCorrida::class, 'produto_id');
+    }
 }

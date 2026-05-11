@@ -29,6 +29,6 @@ class Tarifa extends Model
 
     public function produto()
     {
-        return $this->belongsTo(ProdutoCorrida::class, 'produto_id');
+        return $this->belongsTo(ProdutosCorrida::class, 'produto_id');
     }
 }

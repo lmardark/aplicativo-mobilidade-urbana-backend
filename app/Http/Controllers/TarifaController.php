@@ -12,7 +12,7 @@ class TarifaController extends Controller
      */
     public function index()
     {
-        return Tarifa::with('produto')->get();
+        return Tarifa::with('produto')->paginate();
     }
 
     /**

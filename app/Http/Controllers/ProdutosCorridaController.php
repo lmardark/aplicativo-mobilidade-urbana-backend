@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProdutoCorrida;
+use App\Models\ProdutosCorrida;
 use Illuminate\Http\Request;
 
-class ProdutoCorridaController extends Controller
+class ProdutosCorridaController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
+        return ProdutosCorrida::paginate();
     }
 
     /**
@@ -26,7 +26,7 @@ class ProdutoCorridaController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(ProdutoCorrida $produtoCorrida)
+    public function show(ProdutosCorrida $ProdutosCorrida)
     {
         //
     }
@@ -34,7 +34,7 @@ class ProdutoCorridaController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, ProdutoCorrida $produtoCorrida)
+    public function update(Request $request, ProdutosCorrida $ProdutosCorrida)
     {
         //
     }
@@ -42,7 +42,7 @@ class ProdutoCorridaController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ProdutoCorrida $produtoCorrida)
+    public function destroy(ProdutosCorrida $ProdutosCorrida)
     {
         //
     }

@@ -12,7 +12,7 @@ class ProdutoCategoriaController extends Controller
      */
     public function index()
     {
-        //
+        return ProdutoCategoria::with('produto')->paginate();
     }
 
     /**

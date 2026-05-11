@@ -8,9 +8,10 @@ use App\Http\Controllers\EstimativasController;
 use App\Http\Controllers\MotoristaController;
 use App\Http\Controllers\MotoristaDocumentoController;
 use App\Http\Controllers\PassageiroController;
+use App\Http\Controllers\ProdutoCategoriaController;
+use App\Http\Controllers\ProdutosCorridaController;
 use App\Http\Controllers\TarifaController;
 use App\Http\Controllers\VeiculosController;
-use App\Models\Passageiro;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -49,11 +50,8 @@ Route::middleware('auth:jwt')->group(function () {
     Route::apiResource('tarifas', TarifaController::class);
     Route::get('corridas-buscar', [CorridaController::class, 'buscarEndereco']);
     Route::get('calculos-entre-endereco', [CorridaController::class, 'calculoEntreEnderecos']);
-    // Route::get('corridas-motorista-para-origem', [CorridaController::class, 'motoristaParaOrigem']);
-
-
-
-
+    Route::apiResource('produtos-corridas', ProdutosCorridaController::class);
+    Route::apiResource('produto-categorias', ProdutoCategoriaController::class);
 
     // /calculo
     Route::prefix('estimativa')->group(function () {

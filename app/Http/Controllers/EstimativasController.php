@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Services\EstimarRotaService;
-use Illuminate\Support\Facades\Http;
 
 class EstimativasController extends Controller
 {

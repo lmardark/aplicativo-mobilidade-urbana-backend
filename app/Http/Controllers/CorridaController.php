@@ -3,61 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Corrida;
-use App\Models\ProdutoCorrida;
-use App\Services\SimularCorridaNegociadaService;
+use App\Models\ProdutosCorrida;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use App\Services\EstimarRotaService;
 
 class CorridaController extends Controller
 {
+    public function __construct(
+        protected EstimarRotaService $estimarRotaService
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
-
-    public function estimativaRotaMotoristaParaOrigem()
-    {
-
-        $EnderecoMotorista = [
-            "endereco_formatado" => "Rua brasilia 2930 porto velho",
-            "latitude" => -8.7553147,
-            "longitude" => -63.8973759,
-            "endereco" => 'motorista',
-        ];
-
-        $EnderecoOrigemCorrida = [
-            "endereco_formatado" => "R. Coimbra, 5205 - Conj. 4 de Janeiro, Porto Velho - RO, 76820-556, Brazil",
-            "latitude" => -8.7478987,
-            "longitude" => -63.864684,
-            "endereco" => 'origem',
-
-        ];
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | MOTORISTA -> ORIGEM
-        |--------------------------------------------------------------------------
-        */
-
-        $motoristaParaOrigem = $this->calcularRota(
-            $EnderecoMotorista['latitude'],
-            $EnderecoMotorista['longitude'],
-            $EnderecoOrigemCorrida['latitude'],
-            $EnderecoOrigemCorrida['longitude']
-        );
-
-        return response()->json([
-            'motorista_para_origem' => [
-                'origem' => $EnderecoMotorista['endereco_formatado'],
-                'destino' => $EnderecoOrigemCorrida['endereco_formatado'],
-                'distancia_km' => $motoristaParaOrigem['distancia_km'],
-                'tempo_minutos' => $motoristaParaOrigem['tempo_minutos'],
-            ],
-        ]);
-    }
-
-
-
     public function index()
     {
         return Corrida::with(
@@ -76,7 +35,55 @@ class CorridaController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // passageiro escolhe o produto
+
+        // calculo passa a passo para gerar o valor da negociacao inicial que aparece na tela do usuário
+        // ...
+
+        $prudutoEscolhido = 'negocia';
+        $produto = ProdutosCorrida::where('codigo', $prudutoEscolhido)->first();
+
+        $intinerarioPassageiro = [
+            [
+                "endereco_formatado" => "R. Coimbra, 5205 - Conj. 4 de Janeiro, Porto Velho - RO, 76820-556, Brazil",
+                "latitude" => -8.7478987,
+                "longitude" => -63.864684,
+                "ordem" => 0, // parada
+            ],
+            [
+                "endereco_formatado" => "Av. Nações Unidas, 555 - Km 1, Porto Velho - RO, 76804-175, Brazil",
+                "latitude" => -8.765801,
+                "longitude" => -63.8926692,
+                "ordem" => 1, // destino final
+            ]
+        ];
+
+        $intinerarioMotoristaAteOrigem = [
+            [
+                "endereco_formatado" => "R. Coimbra, 4994 - Flodoaldo Pontes Pinto, Porto Velho - RO, 76820-556, Brazil",
+                "latitude" => -8.7491451,
+                "longitude" => -63.8662573,
+                "ordem" => 0, // origem
+            ],
+            [
+                "endereco_formatado" => "R. Coimbra, 5205 - Conj. 4 de Janeiro, Porto Velho - RO, 76820-556, Brazil",
+                "latitude" => -8.7478987,
+                "longitude" => -63.864684,
+                "ordem" => 1,
+            ],
+        ];
+
+        $estimativaIntinerarioPassageiro = $this->estimarRotaService->executar(enderecos: $intinerarioPassageiro);
+        $estimativaIntinerarioMotoristaAteOrigem = $this->estimarRotaService->executar(enderecos: $intinerarioMotoristaAteOrigem);
+
+        $tempoIntinerarioMotoristaAteOrigem = $estimativaIntinerarioMotoristaAteOrigem['tempo_minutos'];
+        $distanciaIntinerarioMotoristaAteOrigem = $estimativaIntinerarioMotoristaAteOrigem['tempodistancia_kmminutos'];
+
+        $tempoIntinerarioPassageiro = $estimativaIntinerarioPassageiro['tempo_minutos'];
+        $distanciaIntinerarioPassageiro = $estimativaIntinerarioPassageiro['distancia_km'];
+
+        $tempoTotalIntinarantes = $tempoIntinerarioMotoristaAteOrigem + $tempoIntinerarioPassageiro;
+        $distanciaTotalIntinerarios = $distanciaIntinerarioMotoristaAteOrigem + $distanciaIntinerarioPassageiro;
     }
 
     /**
@@ -103,29 +110,6 @@ class CorridaController extends Controller
         //
     }
 
-    public function simularCorridaNegociada(Corrida $corrida)
-    {
-        // passageiro escolhe o produto
-
-        // calculo passa a passo para gerar o valor da negociacao inicial que aparece na tela do usuário
-        // ...
-
-        $prudutoEscolhido = 'negocia';
-        // $valorInicialQueApareceNatelaDousuario = ?
-        $produto = ProdutoCorrida::where('codigo', $prudutoEscolhido)->first();
-    }
-
-    // public function simularCorridaNegociada(Corrida $corrida)
-    // {
-    //     $service = new SimularCorridaNegociadaService();
-
-    //     $resultado = $service->executar([
-    //         'distancia_km' => 7.8,
-    //         'tempo_min' => 16,
-    //         'diferenca_negociada' => 2.68,
-    //     ]);
-    //     return response()->json($resultado);
-    // }
 
     public function buscarEndereco(Request $request)
     {;
@@ -150,238 +134,6 @@ class CorridaController extends Controller
             'endereco_formatado' => $resultado['formatted_address'],
             'latitude' => $resultado['geometry']['location']['lat'],
             'longitude' => $resultado['geometry']['location']['lng'],
-        ];
-    }
-
-
-
-    public function calculoEntreEnderecos()
-    {
-
-        $enderecos = [
-            [
-                "endereco_formatado" => "R. Coimbra, 4994 - Flodoaldo Pontes Pinto, Porto Velho - RO, 76820-556, Brazil",
-                "latitude" => -8.7491451,
-                "longitude" => -63.8662573,
-                "ordem" => 'orgiem',
-            ],
-            [
-                "endereco_formatado" => "R. Coimbra, 5205 - Conj. 4 de Janeiro, Porto Velho - RO, 76820-556, Brazil",
-                "latitude" => -8.7478987,
-                "longitude" => -63.864684,
-                "ordem" => 'parada',
-            ],
-            [
-                "endereco_formatado" => "Av. Nações Unidas, 555 - Km 1, Porto Velho - RO, 76804-175, Brazil",
-                "latitude" => -8.765801,
-                "longitude" => -63.8926692,
-                "ordem" => 'destino',
-            ]
-
-        ];
-
-        $EnderecoMotorista = [
-            "endereco_formatado" => "R. Coimbra, 4994 - Flodoaldo Pontes Pinto, Porto Velho - RO, 76820-556, Brazil",
-            "latitude" => -8.7491451,
-            "longitude" => -63.8662573
-        ];
-
-        $EnderecoOrigemCorrida = [
-            "endereco_formatado" => "R. Coimbra, 5205 - Conj. 4 de Janeiro, Porto Velho - RO, 76820-556, Brazil",
-            "latitude" => -8.7478987,
-            "longitude" => -63.864684
-        ];
-
-        $EnderecoDestinoFinal = [
-            "endereco_formatado" => "Av. Nações Unidas, 555 - Km 1, Porto Velho - RO, 76804-175, Brazil",
-            "latitude" => -8.765801,
-            "longitude" => -63.8926692
-        ];
-
-        /*
-        |--------------------------------------------------------------------------
-        | MOTORISTA -> ORIGEM
-        |--------------------------------------------------------------------------
-        */
-
-        $motoristaParaOrigem = $this->calcularRota(
-            $EnderecoMotorista['latitude'],
-            $EnderecoMotorista['longitude'],
-            $EnderecoOrigemCorrida['latitude'],
-            $EnderecoOrigemCorrida['longitude']
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | ORIGEM -> DESTINO
-        |--------------------------------------------------------------------------
-        */
-
-        $origemParaDestino = $this->calcularRota(
-            $EnderecoOrigemCorrida['latitude'],
-            $EnderecoOrigemCorrida['longitude'],
-            $EnderecoDestinoFinal['latitude'],
-            $EnderecoDestinoFinal['longitude']
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | TOTAL
-        |--------------------------------------------------------------------------
-        */
-
-        $distanciaTotalKm =
-            $motoristaParaOrigem['distancia_km'] +
-            $origemParaDestino['distancia_km'];
-
-        $tempoTotalMinutos =
-            $motoristaParaOrigem['tempo_minutos'] +
-            $origemParaDestino['tempo_minutos'];
-
-        return response()->json([
-
-            /*
-            |--------------------------------------------------------------------------
-            | MOTORISTA -> ORIGEM
-            |--------------------------------------------------------------------------
-            */
-
-            'motorista_para_origem' => [
-                'origem' => $EnderecoMotorista['endereco_formatado'],
-                'destino' => $EnderecoOrigemCorrida['endereco_formatado'],
-                'distancia_km' => $motoristaParaOrigem['distancia_km'],
-                'tempo_minutos' => $motoristaParaOrigem['tempo_minutos'],
-            ],
-
-            /*
-            |--------------------------------------------------------------------------
-            | ORIGEM -> DESTINO
-            |--------------------------------------------------------------------------
-            */
-
-            'origem_para_destino' => [
-                'origem' => $EnderecoOrigemCorrida['endereco_formatado'],
-                'destino' => $EnderecoDestinoFinal['endereco_formatado'],
-                'distancia_km' => $origemParaDestino['distancia_km'],
-                'tempo_minutos' => $origemParaDestino['tempo_minutos'],
-            ],
-
-            /*
-            |--------------------------------------------------------------------------
-            | TOTAL GERAL
-            |--------------------------------------------------------------------------
-            */
-
-            'total_geral' => [
-                'distancia_total_km' => round($distanciaTotalKm, 2),
-                'tempo_total_minutos' => round($tempoTotalMinutos),
-            ]
-        ]);
-    }
-
-    private function calcularRotas(
-        float $origemLat,
-        float $origemLng,
-        float $destinoLat,
-        float $destinoLng
-    ) {
-
-        $url = "https://router.project-osrm.org/route/v1/driving/" .
-            "{$origemLng},{$origemLat};{$destinoLng},{$destinoLat}" .
-            "?overview=false";
-
-        $response = Http::get($url);
-
-        $data = $response->json();
-
-        if (
-            empty($data['routes']) ||
-            !isset($data['routes'][0])
-        ) {
-            return [
-                'distancia_km' => 0,
-                'tempo_minutos' => 0,
-            ];
-        }
-
-        $rota = $data['routes'][0];
-
-        $distanciaKm = $rota['distance'] / 1000;
-
-        $tempoMinutos = $rota['duration'] / 60;
-
-        return [
-            'distancia_km' => round($distanciaKm, 2),
-            'tempo_minutos' => round($tempoMinutos),
-        ];
-    }
-    private function calcularRota(
-        float $origemLat,
-        float $origemLng,
-        float $destinoLat,
-        float $destinoLng
-    ) {
-
-        $response = Http::get(
-            'https://maps.googleapis.com/maps/api/directions/json',
-            [
-                'origin' => "{$origemLat},{$origemLng}",
-                'destination' => "{$destinoLat},{$destinoLng}",
-                'mode' => 'driving',
-                'language' => 'pt-BR',
-                'key' => env('GOOGLE_MAPS_API_KEY'),
-            ]
-        );
-
-        $data = $response->json();
-
-        /*
-    |--------------------------------------------------------------------------
-    | VALIDAÇÃO
-    |--------------------------------------------------------------------------
-    */
-
-        if (
-            empty($data['routes']) ||
-            !isset($data['routes'][0]['legs'][0])
-        ) {
-            return [
-                'distancia_km' => 0,
-                'tempo_minutos' => 0,
-            ];
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | LEG
-    |--------------------------------------------------------------------------
-    */
-
-        $leg = $data['routes'][0]['legs'][0];
-
-        /*
-    |--------------------------------------------------------------------------
-    | DISTÂNCIA
-    |--------------------------------------------------------------------------
-    */
-
-        $distanciaMetros = $leg['distance']['value'];
-
-        $distanciaKm = $distanciaMetros / 1000;
-
-        /*
-    |--------------------------------------------------------------------------
-    | TEMPO
-    |--------------------------------------------------------------------------
-    */
-
-        $tempoSegundos = $leg['duration']['value'];
-
-        $tempoMinutos = $tempoSegundos / 60;
-
-        return [
-            'distancia_km' => round($distanciaKm, 2),
-            'tempo_minutos' => round($tempoMinutos),
         ];
     }
 }

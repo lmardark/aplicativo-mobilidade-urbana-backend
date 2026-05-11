@@ -26,6 +26,7 @@ class Corrida extends Model
         'tempo_solicitacao',
         'tempo_solicitacao',
         'tempo_aceite',
+        'tempo_embarque',
         'tempo_inicio',
         'tempo_final',
         'distancia_total',

@@ -12,7 +12,7 @@ use App\Models\User;
 use App\Models\Veiculo;
 use App\Models\Passageiro;
 use App\Models\ProdutoCategoria;
-use App\Models\ProdutoCorrida;
+use App\Models\ProdutosCorrida;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -27,14 +27,14 @@ class DatabaseSeeder extends Seeder
     {
 
 
-        $produtoCorrida = ProdutoCorrida::factory()->create([
+        $ProdutosCorrida = ProdutosCorrida::factory()->create([
             'nome' => 'Negocia',
             'codigo' => 'negocia',
             'estrategia_precificacao' => 'negociada',
         ]);
 
         ProdutoCategoria::create([
-            'produto_id' => $produtoCorrida->id,
+            'produto_id' => $ProdutosCorrida->id,
             'prioridade' => 2,
             'categoria' => 'carro',
         ]);

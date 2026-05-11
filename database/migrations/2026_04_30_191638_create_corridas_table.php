@@ -55,6 +55,7 @@ return new class extends Migration
             // Tempos
             $table->timestamp('tempo_solicitacao')->nullable();
             $table->timestamp('tempo_aceite')->nullable();
+            $table->timestamp('tempo_embarque')->nullable();
             $table->timestamp('tempo_inicio')->nullable();
             $table->timestamp('tempo_final')->nullable();
 
