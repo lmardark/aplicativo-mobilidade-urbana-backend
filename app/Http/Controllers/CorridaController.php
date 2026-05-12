@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Corrida;
+use App\Models\Passageiro;
 use App\Models\ProdutosCorrida;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -35,35 +36,39 @@ class CorridaController extends Controller
      */
     public function store(Request $request)
     {
-        // passageiro escolhe o produto
-
-        // calculo passa a passo para gerar o valor da negociacao inicial que aparece na tela do usuário
-        // ...
-
-        $prudutoEscolhido = 'negocia';
-        $produto = ProdutosCorrida::where('codigo', $prudutoEscolhido)->first();
-
+        $passageiroId = 1;
+        $motoristaId = 1;
+        $veiculoId = 1;
+        $cidadeId = 18;
         $intinerarioPassageiro = [
             [
                 "endereco_formatado" => "R. Coimbra, 5205 - Conj. 4 de Janeiro, Porto Velho - RO, 76820-556, Brazil",
                 "latitude" => -8.7478987,
                 "longitude" => -63.864684,
-                "ordem" => 0, // parada
+                "ordem" => 0,
             ],
             [
                 "endereco_formatado" => "Av. Nações Unidas, 555 - Km 1, Porto Velho - RO, 76804-175, Brazil",
                 "latitude" => -8.765801,
                 "longitude" => -63.8926692,
-                "ordem" => 1, // destino final
+                "ordem" => 1,
             ]
         ];
 
+        $estimativaIntinerarioPassageiro = $this->estimarRotaService->executar(enderecos: $intinerarioPassageiro);
+        $tempoIntinerarioPassageiro = $estimativaIntinerarioPassageiro['tempo_minutos'];
+        $distanciaIntinerarioPassageiro = $estimativaIntinerarioPassageiro['distancia_km'];
+
+        $prudutoEscolhido = 'negocia';
+        $produto = ProdutosCorrida::where('codigo', $prudutoEscolhido)->first();
+
+        $formaPagamento = 'dinheiro';
         $intinerarioMotoristaAteOrigem = [
             [
                 "endereco_formatado" => "R. Coimbra, 4994 - Flodoaldo Pontes Pinto, Porto Velho - RO, 76820-556, Brazil",
                 "latitude" => -8.7491451,
                 "longitude" => -63.8662573,
-                "ordem" => 0, // origem
+                "ordem" => 0,
             ],
             [
                 "endereco_formatado" => "R. Coimbra, 5205 - Conj. 4 de Janeiro, Porto Velho - RO, 76820-556, Brazil",
@@ -72,18 +77,14 @@ class CorridaController extends Controller
                 "ordem" => 1,
             ],
         ];
-
-        $estimativaIntinerarioPassageiro = $this->estimarRotaService->executar(enderecos: $intinerarioPassageiro);
         $estimativaIntinerarioMotoristaAteOrigem = $this->estimarRotaService->executar(enderecos: $intinerarioMotoristaAteOrigem);
-
         $tempoIntinerarioMotoristaAteOrigem = $estimativaIntinerarioMotoristaAteOrigem['tempo_minutos'];
         $distanciaIntinerarioMotoristaAteOrigem = $estimativaIntinerarioMotoristaAteOrigem['tempodistancia_kmminutos'];
-
-        $tempoIntinerarioPassageiro = $estimativaIntinerarioPassageiro['tempo_minutos'];
-        $distanciaIntinerarioPassageiro = $estimativaIntinerarioPassageiro['distancia_km'];
-
         $tempoTotalIntinarantes = $tempoIntinerarioMotoristaAteOrigem + $tempoIntinerarioPassageiro;
         $distanciaTotalIntinerarios = $distanciaIntinerarioMotoristaAteOrigem + $distanciaIntinerarioPassageiro;
+        $contraPropostaMotorista = 0;
+        $diferencaNegociada = 0;
+        // aqui manda o service  SimularCorridaNegociadaService e manda as informacoes de intinerarios (distancia e tempo).
     }
 
     /**

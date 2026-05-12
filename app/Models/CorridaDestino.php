@@ -16,7 +16,7 @@ class CorridaDestino extends Model
         'endereco',
         'latitude',
         'longitude',
-        'tempo_estimado_ate_proximo',
+        'tempo_estimado_ate_proximo_destino',
         'distancia_ate_proximo_destino'
     ];
 }
