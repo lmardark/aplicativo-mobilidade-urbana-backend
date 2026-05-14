@@ -84,6 +84,9 @@ class UsuarioController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                "telefone" => $user->telefone,
+                "cpf" => $user->cpf,
+                "data_nascimento" => $user->data_nascimento,
             ],
             'token' => $token
         ], 201);
@@ -189,6 +192,10 @@ class UsuarioController extends Controller
             $this->removerFotoPerfil($user);
             $this->criarImagemPefil($request, $user);
             return response()->json([
+                'user' => [
+                    "foto" => $user->foto,
+                    "foto_thumbnail" => $user->foto_thumbnail,
+                ],
                 'success' => true,
                 'message' => 'Foto alterada com sucesso!'
             ]);

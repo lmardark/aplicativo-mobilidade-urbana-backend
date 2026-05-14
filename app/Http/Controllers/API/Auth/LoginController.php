@@ -47,6 +47,15 @@ class LoginController extends Controller
         );
 
         return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                "telefone" => $user->telefone,
+                "cpf" => $user->cpf,
+                "data_nascimento" => $user->data_nascimento,
+                "foto" => $user->foto,
+            ],
             'message' => 'Login realizado com sucesso.',
             'token' => $token
         ])->withCookie($cookie);
