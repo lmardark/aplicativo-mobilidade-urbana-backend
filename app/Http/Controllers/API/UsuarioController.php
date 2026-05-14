@@ -30,6 +30,10 @@ class UsuarioController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
+
+
+
     public function store(Request $request)
     {
         $user = User::create([
@@ -45,13 +49,45 @@ class UsuarioController extends Controller
 
         $this->criarImagemPefil($request, $user);
 
+        // gera token
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         return response()->json([
-            'success' => true,
-            'message' => 'Registro realizado com sucesso',
-            'data' => $user
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
+            'token' => $token
         ], 201);
     }
 
+    public function register(Request $request)
+    {
+        $user = User::create([
+            "name" => $request->name,
+            "data_nascimento" => $request->data_nascimento,
+            "telefone" => $request->telefone,
+            "cpf" => $request->cpf,
+            "email" => $request->email,
+            "status" => 'ativo',
+            "password" => bcrypt($request->password)
+        ]);
+
+        $this->criarImagemPefil($request, $user);
+
+        // gera token JWT
+        $token = auth('jwt')->login($user);
+
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
+            'token' => $token
+        ], 201);
+    }
     /**
      * Display the specified resource.
      */

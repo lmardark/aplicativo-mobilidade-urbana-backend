@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post('auth/login', LoginController::class)->name('auth.login');
+Route::post('auth/register', [UsuarioController::class, 'register']);
 
 Route::middleware('auth:jwt')->group(function () {
     Route::post('auth/logout', LogoutController::class)->name('auth.logout');
