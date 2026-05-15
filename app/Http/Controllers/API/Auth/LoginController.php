@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\API\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\CodigoVerificacao;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\Response;
 
 class LoginController extends Controller
@@ -55,6 +57,103 @@ class LoginController extends Controller
                 "cpf" => $user->cpf,
                 "data_nascimento" => $user->data_nascimento,
                 "foto" => $user->foto,
+            ],
+            'message' => 'Login realizado com sucesso.',
+            'token' => $token
+        ])->withCookie($cookie);
+    }
+
+
+    public function enviarCodigo(Request $request)
+    {
+        $request->validate([
+            'telefone' => 'required'
+        ]);
+        $telefone = preg_replace('/\D/', '', $request->telefone);
+        CodigoVerificacao::where('telefone', $telefone)->delete();
+
+        // código fake
+        $codigo = rand(100000, 999999);
+
+        CodigoVerificacao::create([
+            'telefone' => $telefone,
+            'codigo' => $codigo,
+            'expira_em' => Carbon::now()->addMinutes(5)
+        ]);
+
+        return response()->json([
+            'message' => 'Código enviado',
+            'codigo' => $codigo // TEMPORÁRIO
+        ]);
+    }
+
+    public function verificarCodigo(Request $request)
+    {
+        $request->validate([
+            'telefone' => 'required',
+            'codigo' => 'required'
+        ]);
+
+        $telefone = preg_replace('/\D/', '', $request->telefone);
+
+        $registro = CodigoVerificacao::where('telefone', $telefone)
+            ->where('codigo', $request->codigo)
+            ->latest()
+            ->first();
+
+        if (!$registro) {
+            return response()->json([
+                'message' => 'Código inválido'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (now()->gt($registro->expira_em)) {
+            return response()->json([
+                'message' => 'Código expirado'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // procura usuário
+        $user = User::where('telefone', $telefone)->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Usuário não encontrado'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard */
+        $guard = auth('jwt');
+
+        // gera token JWT
+        $token = $guard->login($user);
+
+        $ttl = $guard->getTTL();
+
+        $cookie = cookie(
+            name: 'token',
+            value: $token,
+            minutes: $ttl,
+            path: '/',
+            domain: null,
+            secure: env('APP_ENV') === 'production',
+            httpOnly: true,
+            raw: false,
+            sameSite: 'Lax'
+        );
+
+        // remove código após uso
+        $registro->delete();
+
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'telefone' => $user->telefone,
+                'cpf' => $user->cpf,
+                'data_nascimento' => $user->data_nascimento,
+                'foto' => $user->foto,
             ],
             'message' => 'Login realizado com sucesso.',
             'token' => $token
