@@ -73,7 +73,7 @@ class LoginController extends Controller
         CodigoVerificacao::where('telefone', $telefone)->delete();
 
         // código fake
-        $codigo = rand(100000, 999999);
+        $codigo = rand(1000, 9999);
 
         CodigoVerificacao::create([
             'telefone' => $telefone,
