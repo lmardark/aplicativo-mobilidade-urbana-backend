@@ -48,7 +48,6 @@ class DatabaseSeeder extends Seeder
             'foto' => "",
             'foto_thumbnail' => "",
             'status' => "ativo",
-            'password' => "123"
         ]);
 
         $passageiro = Passageiro::factory()->create([
