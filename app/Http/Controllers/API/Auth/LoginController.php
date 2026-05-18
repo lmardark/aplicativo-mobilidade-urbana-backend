@@ -7,6 +7,7 @@ use App\Models\CodigoVerificacao;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use phpDocumentor\Reflection\Types\Boolean;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -71,16 +72,11 @@ class LoginController extends Controller
             'telefone' => 'required'
         ]);
         $telefone = preg_replace('/\D/', '', $request->telefone);
-        CodigoVerificacao::where('telefone', $telefone)->delete();
 
         // código fake
         $codigo = rand(1000, 9999);
 
-        CodigoVerificacao::create([
-            'telefone' => $telefone,
-            'codigo' => $codigo,
-            'expira_em' => Carbon::now()->addMinutes(5)
-        ]);
+        Cache::put("codigo_verificacao:$telefone", $codigo, 60);
 
         return response()->json([
             'message' => 'Código enviado',
@@ -97,20 +93,11 @@ class LoginController extends Controller
 
         $telefone = preg_replace('/\D/', '', $request->telefone);
 
-        $registro = CodigoVerificacao::where('telefone', $telefone)
-            ->where('codigo', $request->codigo)
-            ->latest()
-            ->first();
+        $registro = Cache::get("codigo_verificacao:$telefone");
 
         if (!$registro) {
             return response()->json([
                 'message' => 'Código inválido'
-            ], Response::HTTP_UNAUTHORIZED);
-        }
-
-        if (now()->gt($registro->expira_em)) {
-            return response()->json([
-                'message' => 'Código expirado'
             ], Response::HTTP_UNAUTHORIZED);
         }
 
@@ -144,7 +131,7 @@ class LoginController extends Controller
         );
 
         // remove código após uso
-        $registro->delete();
+        Cache::forget("codigo_verificacao:$telefone");
 
         return response()->json([
             'user' => [
