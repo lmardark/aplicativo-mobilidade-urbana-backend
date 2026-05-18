@@ -7,6 +7,7 @@ use App\Models\CodigoVerificacao;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use phpDocumentor\Reflection\Types\Boolean;
 use Symfony\Component\HttpFoundation\Response;
 
 class LoginController extends Controller
@@ -158,5 +159,18 @@ class LoginController extends Controller
             'message' => 'Login realizado com sucesso.',
             'token' => $token
         ])->withCookie($cookie);
+    }
+
+    public function verificaSeContaExiste(Request $request)
+    {
+        $request->validate([
+            'telefone' => 'required'
+        ]);
+        $telefone = preg_replace('/\D/', '', $request->telefone);
+        $user = User::where('telefone', $telefone)->first();
+        $contaExiste = $user ? true : false;
+        return response()->json([
+            'contaExiste' => $contaExiste
+        ]);
     }
 }
