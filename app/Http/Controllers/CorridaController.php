@@ -120,13 +120,12 @@ class CorridaController extends Controller
             return response()->json(null);
         }
 
-        // 🔹 Alterado para o endpoint 'textsearch' da Places API
         $response = Http::get(
             'https://maps.googleapis.com/maps/api/place/textsearch/json',
             [
-                'query' => $endereco, // Mudou de 'address' para 'query'
+                'query' => $endereco,
                 'key' => env('GOOGLE_MAPS_API_KEY'),
-                'language' => 'pt-BR' // Força a resposta vir em português estruturado
+                'language' => 'pt-BR'
             ]
         );
 
@@ -136,16 +135,28 @@ class CorridaController extends Controller
             return response()->json(null);
         }
 
-        // Pega o primeiro resultado da busca
         $resultado = $data['results'][0];
 
-        /* A estrutura retornada pelo Places API agora possui:
-      $resultado['name'] -> "Porto Velho Shopping" ou "Residencial Porto Madero V"
-      $resultado['formatted_address'] -> "Avenida Rio Madeira, 3288 - Flodoaldo Pontes Pinto..."
-    */
+        $name = $resultado['name'] ?? '';
+        $formattedAddress = $resultado['formatted_address'] ?? '';
+
+        // Remove o texto do "name" do início do formattedAddress
+        if (!empty($name) && str_contains($formattedAddress, $name)) {
+
+            // Remove o name + vírgula/espaço após ele
+            $formattedAddress = preg_replace(
+                '/^' . preg_quote($name, '/') . '\s*,?\s*-?\s*/u',
+                '',
+                $formattedAddress
+            );
+
+            // Remove possíveis vírgulas/espaços sobrando no início
+            $formattedAddress = ltrim($formattedAddress, ', -');
+        }
+
         return response()->json([
-            'name' => $resultado['name'] ?? '',
-            'formattedAddress' => $resultado['formatted_address'],
+            'name' => $name,
+            'formattedAddress' => $formattedAddress,
             'latitude' => $resultado['geometry']['location']['lat'],
             'longitude' => $resultado['geometry']['location']['lng'],
         ]);

@@ -24,7 +24,7 @@ class EstimarRotaService
         */
 
         usort($enderecos, function ($a, $b) {
-            return $a['ordem'] <=> $b['ordem'];
+            return $a['order'] <=> $b['order'];
         });
 
         /*
@@ -76,7 +76,7 @@ class EstimarRotaService
         $retorno = [
 
             'origem' => [
-                'endereco' => $origem['endereco_formatado'],
+                'endereco' => $origem['formattedAddress'],
                 'latitude' => $origem['latitude'],
                 'longitude' => $origem['longitude'],
             ],
@@ -96,7 +96,7 @@ class EstimarRotaService
             $retorno['paradas'] = collect($paradas)->map(function ($parada) {
 
                 return [
-                    'endereco' => $parada['endereco_formatado'],
+                    'endereco' => $parada['formattedAddress'],
                     'latitude' => $parada['latitude'],
                     'longitude' => $parada['longitude'],
                 ];
@@ -110,7 +110,7 @@ class EstimarRotaService
         */
 
         $retorno['destino'] = [
-            'endereco' => $destino['endereco_formatado'],
+            'endereco' => $destino['formattedAddress'],
             'latitude' => $destino['latitude'],
             'longitude' => $destino['longitude'],
         ];
