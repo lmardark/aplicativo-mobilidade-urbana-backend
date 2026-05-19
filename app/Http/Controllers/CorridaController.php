@@ -113,28 +113,41 @@ class CorridaController extends Controller
 
 
     public function buscarEndereco(Request $request)
-    {;
+    {
         $endereco = $request->endereco ?? '';
+
+        if (empty($endereco)) {
+            return response()->json(null);
+        }
+
+        // 🔹 Alterado para o endpoint 'textsearch' da Places API
         $response = Http::get(
-            'https://maps.googleapis.com/maps/api/geocode/json',
+            'https://maps.googleapis.com/maps/api/place/textsearch/json',
             [
-                'address' => $endereco,
+                'query' => $endereco, // Mudou de 'address' para 'query'
                 'key' => env('GOOGLE_MAPS_API_KEY'),
+                'language' => 'pt-BR' // Força a resposta vir em português estruturado
             ]
         );
 
         $data = $response->json();
 
         if (empty($data['results'])) {
-            return null;
+            return response()->json(null);
         }
 
+        // Pega o primeiro resultado da busca
         $resultado = $data['results'][0];
 
-        return [
-            'endereco_formatado' => $resultado['formatted_address'],
+        /* A estrutura retornada pelo Places API agora possui:
+      $resultado['name'] -> "Porto Velho Shopping" ou "Residencial Porto Madero V"
+      $resultado['formatted_address'] -> "Avenida Rio Madeira, 3288 - Flodoaldo Pontes Pinto..."
+    */
+        return response()->json([
+            'name' => $resultado['name'] ?? '',
+            'formattedAddress' => $resultado['formatted_address'],
             'latitude' => $resultado['geometry']['location']['lat'],
             'longitude' => $resultado['geometry']['location']['lng'],
-        ];
+        ]);
     }
 }
