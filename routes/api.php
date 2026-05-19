@@ -21,6 +21,7 @@ Route::post('/auth/verificar-codigo', [LoginController::class, 'verificarCodigo'
 Route::post('auth/enviar-codigo', [LoginController::class, 'enviarCodigo']);
 Route::get('auth/verifica-se-conta-existe', [LoginController::class, 'verificaSeContaExiste']);
 Route::middleware('auth:jwt')->group(function () {
+    Route::get('buscar-endereco', [CorridaController::class, 'buscarEndereco']);
     Route::post('auth/logout', LogoutController::class)->name('auth.logout');
     Route::apiResource('users', UsuarioController::class);
     Route::get('usuario-logado', [UsuarioController::class, 'usuarioLogado']);
@@ -50,7 +51,6 @@ Route::middleware('auth:jwt')->group(function () {
     Route::get('corridas-negociada', [CorridaController::class, 'simularCorridaNegociada']);
     Route::apiResource('corridas-negociacoes', CorridaController::class);
     Route::apiResource('tarifas', TarifaController::class);
-    Route::get('corridas-buscar', [CorridaController::class, 'buscarEndereco']);
     Route::get('calculos-entre-endereco', [CorridaController::class, 'calculoEntreEnderecos']);
     Route::apiResource('produtos-corridas', ProdutosCorridaController::class);
     Route::apiResource('produto-categorias', ProdutoCategoriaController::class);
