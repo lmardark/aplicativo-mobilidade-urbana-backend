@@ -21,7 +21,7 @@ use RuntimeException;
  *   (trocar de/para dinheiro no meio do trajeto muda como o motorista recebe);
  * - destino: na busca vale na hora; depois do aceite vira um pedido que o
  *   motorista aceita ou recusa, com o preço recalculado; em categorias de
- *   preço negociado o destino não muda depois do aceite.
+ *   preço negociado o destino não muda.
  */
 class AlterarCorridaService
 {
@@ -51,8 +51,9 @@ class AlterarCorridaService
             return false;
         }
 
-        return in_array($corrida->status_corrida, ['solicitada', 'em_busca'], true)
-            || ! $this->precoNegociado($corrida);
+        // no Negocia o preço é a oferta do passageiro: mudar o trajeto, mesmo
+        // durante a negociação, recalcularia pela tarifa e apagaria a oferta
+        return ! $this->precoNegociado($corrida);
     }
 
     public function alterarPagamento(int $passageiroId, int $corridaId, string $metodo): Corrida
@@ -112,7 +113,7 @@ class AlterarCorridaService
 
             $semMotorista = in_array($corrida->status_corrida, ['solicitada', 'em_busca'], true);
 
-            if (! $semMotorista && $this->precoNegociado($corrida)) {
+            if ($this->precoNegociado($corrida)) {
                 throw new RuntimeException(
                     'Em corridas com preço negociado o trajeto não pode ser alterado. Cancele e peça uma nova corrida.',
                     409

@@ -476,6 +476,8 @@ class CorridaController extends Controller
             // várias categorias de uma vez (ex.: Pop e Moto): vai quem atender primeiro
             'produtos_codigos' => 'sometimes|array|min:1|max:8',
             'produtos_codigos.*' => 'string|max:60|distinct',
+            // Negocia: quanto o passageiro oferece
+            'valor_oferecido' => 'nullable|numeric|min:1|max:5000',
             'metodo_pagamento' => 'nullable|in:dinheiro,cartao,pix',
             'convidado' => 'nullable|array',
             'convidado.nome' => 'required_with:convidado|string|min:2|max:60',
@@ -502,7 +504,8 @@ class CorridaController extends Controller
                 cotacao: $cotacao,
                 produtosCodigos: array_values(array_map('strval', $dados['produtos_codigos'] ?? [$dados['produto_codigo']])),
                 metodoPagamento: $dados['metodo_pagamento'] ?? null,
-                convidado: $dados['convidado'] ?? null
+                convidado: $dados['convidado'] ?? null,
+                valorOferecido: isset($dados['valor_oferecido']) ? (float) $dados['valor_oferecido'] : null
             );
         } catch (RuntimeException $excecao) {
             $status = $excecao->getCode() === 409 ? 409 : 422;

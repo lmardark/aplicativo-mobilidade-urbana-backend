@@ -29,19 +29,30 @@ class SolicitarCorridaService
     /**
      * @param  list<string>  $produtosCodigos  categorias aceitas pelo passageiro; a corrida vai para quem atende qualquer uma
      * @param  array{nome: string, telefone: string}|null  $convidado  quem vai viajar, se não for o titular da conta
+     * @param  float|null  $valorOferecido  no Negocia, quanto o passageiro oferece pagar
      */
     public function executar(
         User $usuario,
         CotacaoCorrida $cotacao,
         array $produtosCodigos,
         ?string $metodoPagamento = null,
-        ?array $convidado = null
+        ?array $convidado = null,
+        ?float $valorOferecido = null
     ): Corrida {
         $categorias = $this->categoriasEscolhidas($cotacao, $produtosCodigos);
 
         // reserva a mais cara; se aceitar alguém de uma categoria mais barata,
         // a corrida passa a custar a dele e a sobra volta em crédito na liquidação
         $categoria = $categorias[0];
+        $negociada = ($categoria['produto']['estrategia_precificacao'] ?? null) === 'negociada';
+
+        if ($negociada) {
+            $categoria = NegociacaoCorridaService::categoriaComOferta(
+                $categoria,
+                $valorOferecido ?? (float) $categoria['valores']['valor_passageiro']
+            );
+            $categorias = [$categoria];
+        }
 
         $passageiro = Passageiro::firstOrCreate(['user_id' => $usuario->id]);
         $pagamento = app(PagamentoCorridaService::class);
@@ -49,9 +60,10 @@ class SolicitarCorridaService
         // valor em aberto de corrida anterior bloqueia qualquer novo pedido
         $pagamento->exigirSemPendencia($passageiro->id);
 
-        $prePago = $pagamento->ehPrePago($metodoPagamento);
+        // no Negocia a cobrança só é gerada depois que o passageiro escolhe a proposta
+        $prePago = ! $negociada && $pagamento->ehPrePago($metodoPagamento);
 
-        $corrida = DB::transaction(function () use ($cotacao, $categoria, $categorias, $passageiro, $metodoPagamento, $prePago, $pagamento, $convidado) {
+        $corrida = DB::transaction(function () use ($cotacao, $categoria, $categorias, $passageiro, $metodoPagamento, $prePago, $pagamento, $convidado, $negociada) {
             // trava o passageiro: dois pedidos simultâneos não criam duas
             // corridas ativas nem gastam o mesmo crédito
             Passageiro::whereKey($passageiro->id)->lockForUpdate()->first();
@@ -80,6 +92,7 @@ class SolicitarCorridaService
                 'cidade_id' => $cotacao->cidade_id,
                 // pré-pago: invisível aos motoristas até o pagamento ser confirmado
                 'status_corrida' => $prePago ? 'aguardando_pagamento' : 'solicitada',
+                'status_negociacao' => $negociada ? 'em_negociacao' : null,
                 'tempo_solicitacao' => now(),
                 'distancia_total' => $cotacao->distancia_km,
                 'valor_estimado_inicial' => $categoria['valores']['valor_passageiro'],

@@ -7,6 +7,7 @@ use App\Http\Controllers\Corrida\CobrancaCartaoController;
 use App\Http\Controllers\Corrida\CobrancaPixController;
 use App\Http\Controllers\Corrida\CorridaController;
 use App\Http\Controllers\Corrida\CorridaMotoristaController;
+use App\Http\Controllers\Corrida\NegociacaoCorridaController;
 use Illuminate\Support\Facades\Route;
 
 // já dentro do grupo auth:jwt (ver routes/api.php)
@@ -24,6 +25,13 @@ Route::post('motorista/posicao', [CorridaMotoristaController::class, 'posicao'])
 Route::get('motorista/corridas-disponiveis', [CorridaMotoristaController::class, 'corridasDisponiveis']);
 Route::post('motorista/corridas/{corrida}/aceitar', [CorridaMotoristaController::class, 'aceitar']);
 Route::post('motorista/corridas/{corrida}/recusar', [CorridaMotoristaController::class, 'recusar']);
+// Negocia: o motorista propõe, o passageiro vê as propostas e escolhe uma
+Route::post('motorista/corridas/{corrida}/propostas', [NegociacaoCorridaController::class, 'propor'])
+    ->middleware('throttle:30,1,negocia-propor');
+Route::get('corridas/{corrida}/propostas', [NegociacaoCorridaController::class, 'propostas']);
+Route::post('corridas/{corrida}/propostas/{proposta}/escolher', [NegociacaoCorridaController::class, 'escolher'])
+    ->whereNumber('proposta')
+    ->middleware('throttle:20,1,negocia-escolher');
 Route::post('motorista/corridas/{corrida}/{acao}', [CorridaMotoristaController::class, 'transicionar'])
     ->whereIn('acao', ['cheguei', 'iniciar', 'finalizar']);
 Route::post('motorista/corridas/{corrida}/cancelar', [CorridaMotoristaController::class, 'cancelar']);

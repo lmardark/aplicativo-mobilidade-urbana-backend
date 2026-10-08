@@ -30,6 +30,8 @@ class DespachoCorridaService
     private const RAIO_TERRA_KM = 6371;
 
     private const STATUS_ATIVOS_MOTORISTA = [
+        // Negocia no Pix/cartão: escolhido, o motorista espera o pagamento
+        'aguardando_pagamento',
         'aceita',
         'motorista_chegou',
         'em_andamento',
@@ -164,6 +166,11 @@ class DespachoCorridaService
             ->orderBy('tempo_solicitacao')
             ->get();
 
+        // no Negocia o motorista vê se já mandou proposta e de quanto
+        if ($corridas->contains(fn (Corrida $corrida) => $corrida->status_negociacao === 'em_negociacao')) {
+            $corridas->load(['negociacoes' => fn ($proposta) => $proposta->where('motorista_id', $motorista->id)]);
+        }
+
         $reputacoes = $this->reputacoesDosPassageiros($corridas);
         $raios = $this->raiosDasTarifas($corridas);
 
@@ -214,6 +221,11 @@ class DespachoCorridaService
 
             if ($corrida->status_corrida !== 'solicitada' || $corrida->motorista_id !== null) {
                 throw new RuntimeException('Esta corrida já foi aceita por outro motorista.', 409);
+            }
+
+            // no Negocia é o passageiro quem escolhe entre as propostas
+            if ($corrida->status_negociacao === 'em_negociacao') {
+                throw new RuntimeException('Nesta corrida o passageiro escolhe o motorista. Envie sua proposta.', 409);
             }
 
             [$status, $veiculo, $opcao] = $this->validarMotoristaParaCorrida($motorista, $corrida);
@@ -668,6 +680,8 @@ class DespachoCorridaService
             'valor_motorista' => $opcao->valor_motorista ?? (float) ($corrida->corrida_financeiro->valor_motorista ?? 0),
             'categoria' => $opcao?->produto?->nome,
             'metodo_pagamento' => $corrida->metodo_pagamento,
+            'negociavel' => $corrida->status_negociacao === 'em_negociacao',
+            'minha_proposta' => $this->minhaProposta($corrida),
             'origem' => $origem->endereco,
             'destino' => $destino?->endereco,
             'paradas' => $corrida->corrida_destinos->where('tipo', 'parada')->count(),
@@ -783,6 +797,24 @@ class DespachoCorridaService
         return Tarifa::whereIn('id', $tarifaIds)
             ->pluck('raio_busca_motorista_km', 'id')
             ->all();
+    }
+
+    /**
+     * @return array{valor_motorista: float|null, status: string, expira_em: string|null}|null
+     */
+    private function minhaProposta(Corrida $corrida): ?array
+    {
+        if (! $corrida->relationLoaded('negociacoes')) {
+            return null;
+        }
+
+        $proposta = $corrida->negociacoes->first();
+
+        return $proposta === null ? null : [
+            'valor_motorista' => $proposta->valor_motorista,
+            'status' => $proposta->valendo() ? 'pendente' : ($proposta->status === 'pendente' ? 'expirada' : $proposta->status),
+            'expira_em' => $proposta->expira_em?->toIso8601String(),
+        ];
     }
 
     private function veiculoPadrao(Motorista $motorista): ?int
