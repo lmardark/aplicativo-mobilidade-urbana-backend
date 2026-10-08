@@ -57,7 +57,7 @@ function motoristaDoSaque(): Motorista
     ]);
 }
 
-function corridaPaga(Motorista $motorista, string $metodo, float $liquido, float $taxa): void
+function corridaPaga(Motorista $motorista, string $metodo, float $liquido, float $taxa, string $statusPagamento = 'pago'): void
 {
     $passageiro = Passageiro::create(['user_id' => usuarioDoSaque('passageiro')->id, 'media_avaliacao' => null]);
     $corrida = Corrida::create([
@@ -69,7 +69,7 @@ function corridaPaga(Motorista $motorista, string $metodo, float $liquido, float
         'tempo_aceite' => now()->subHour(),
         'tempo_final' => now()->subMinutes(10),
         'metodo_pagamento' => $metodo,
-        'status_pagamento' => 'pago',
+        'status_pagamento' => $statusPagamento,
     ]);
     DB::table('corrida_financeiros')->insert([
         'corrida_id' => $corrida->id,
@@ -225,6 +225,20 @@ it('saldo da carteira: corrida paga no app credita, em dinheiro desconta a taxa'
         ->getJson('/api/motorista/me/ganhos')
         ->assertJsonPath('saldo', 28.5)
         ->assertJsonPath('ganhos_do_dia', 45);
+});
+
+it('corrida no app sem pagamento confirmado não vira saldo', function () {
+    $motorista = motoristaDoSaque();
+    corridaPaga($motorista, 'pix', 20.00, 1.20);
+    corridaPaga($motorista, 'pix', 50.00, 3.00, 'pendente');
+    corridaPaga($motorista, 'cartao', 40.00, 2.40, 'em_aberto');
+    corridaPaga($motorista, 'cartao', 30.00, 1.80, 'estornado');
+
+    $this->actingAs($motorista->user, 'jwt')
+        ->getJson('/api/motorista/me/carteira')
+        ->assertOk()
+        ->assertJsonPath('saldo', 20)
+        ->assertJsonCount(1, 'movimentos');
 });
 
 it('saca pelo provedor simulado e o saque conclui depois de alguns segundos', function () {
