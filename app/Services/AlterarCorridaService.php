@@ -31,9 +31,6 @@ class AlterarCorridaService
 
     private const PAGAMENTOS_DIGITAIS = ['pix', 'cartao'];
 
-    // mesmo limite da tela de paradas do app
-    private const MAX_PARADAS = 4;
-
     // cada pedido recalcula a rota na API paga do Google
     private const MAX_ALTERACOES_POR_CORRIDA = 6;
 
@@ -134,8 +131,9 @@ class AlterarCorridaService
                 ? count($itinerario) - 2
                 : $paradasAtuais->count() + ($tipo === 'parada' ? 1 : 0);
 
-            if ($totalDeParadas > self::MAX_PARADAS) {
-                throw new RuntimeException('A corrida já tem o máximo de '.self::MAX_PARADAS.' paradas.', 422);
+            // as paradas já feitas continuam no itinerário e contam no limite
+            if ($totalDeParadas > Corrida::MAX_PARADAS) {
+                throw new RuntimeException('A corrida pode ter no máximo '.Corrida::MAX_PARADAS.' paradas.', 422);
             }
 
             if ($itinerario !== null) {

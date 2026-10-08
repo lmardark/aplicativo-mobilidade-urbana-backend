@@ -214,10 +214,12 @@ class CorridaController extends Controller
             'endereco' => 'required|string|max:255',
             'latitude' => 'required|numeric|between:-90,90|not_in:0',
             'longitude' => 'required|numeric|between:-180,180|not_in:0',
-            'itinerario' => 'sometimes|array|min:2|max:6',
+            'itinerario' => 'sometimes|array|min:2|max:'.(Corrida::MAX_PARADAS + 2),
             'itinerario.*.endereco' => 'required_with:itinerario|string|max:255',
             'itinerario.*.latitude' => 'required_with:itinerario|numeric|between:-90,90|not_in:0',
             'itinerario.*.longitude' => 'required_with:itinerario|numeric|between:-180,180|not_in:0',
+        ], [
+            'itinerario.max' => 'A corrida pode ter no máximo '.Corrida::MAX_PARADAS.' paradas.',
         ]);
 
         return $this->alterarComoPassageiro($request, $corrida, $alterarCorrida,
@@ -728,13 +730,15 @@ class CorridaController extends Controller
     public function precosCorrida(Request $request): JsonResponse
     {
         $dados = $request->validate([
-            'enderecos' => 'required|array|min:2|max:6',
+            'enderecos' => 'required|array|min:2|max:'.(Corrida::MAX_PARADAS + 2),
             'enderecos.*.order' => 'required|integer|min:0',
             'enderecos.*.latitude' => 'required|numeric|between:-90,90',
             'enderecos.*.longitude' => 'required|numeric|between:-180,180',
             'enderecos.*.formattedAddress' => 'nullable|string|max:500',
             'cidade_id' => 'nullable|integer',
             'tempo_espera_min' => 'nullable|numeric|min:0|max:600',
+        ], [
+            'enderecos.max' => 'A corrida pode ter no máximo '.Corrida::MAX_PARADAS.' paradas.',
         ]);
 
         $rota = $this->estimarRotaService->executar(enderecos: $dados['enderecos']);

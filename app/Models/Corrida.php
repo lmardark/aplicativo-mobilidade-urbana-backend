@@ -14,6 +14,9 @@ class Corrida extends Model
     /** @use HasFactory<CorridaFactory> */
     use HasFactory;
 
+    // embarque + no máximo 2 paradas + destino (regra do produto)
+    public const MAX_PARADAS = 2;
+
     protected $fillable = [
         'codigo_corrida',
         'produto_id',
