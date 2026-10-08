@@ -9,11 +9,16 @@ use App\Events\CorridasDisponiveisAlteradas;
 use App\Events\MotoristaMoveu;
 use App\Models\AvaliacoesCorrida;
 use App\Models\Corrida;
+use App\Models\CorridaFinanceiro;
+use App\Models\CorridaOpcao;
 use App\Models\Motorista;
 use App\Models\MotoristaVeiculo;
+use App\Models\ProdutosCorrida;
 use App\Models\StatusBusca;
 use App\Models\Tarifa;
+use App\Models\Veiculo;
 use App\Support\Avisar;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -150,9 +155,12 @@ class DespachoCorridaService
             throw new RuntimeException('Posição do motorista desconhecida.', 422);
         }
 
+        $veiculo = $this->veiculoEmUso($motorista, $status);
+
         $corridas = Corrida::where('status_corrida', 'solicitada')
             ->whereNull('motorista_id')
-            ->with(['corrida_destinos', 'corrida_financeiro'])
+            ->where(fn (Builder $consulta) => $this->queOVeiculoAtende($consulta, $veiculo))
+            ->with(['corrida_destinos', 'corrida_financeiro', 'opcoes.produto'])
             ->orderBy('tempo_solicitacao')
             ->get();
 
@@ -160,7 +168,7 @@ class DespachoCorridaService
         $raios = $this->raiosDasTarifas($corridas);
 
         $ofertas = $corridas
-            ->map(fn (Corrida $corrida) => $this->montarOferta($corrida, $status, $reputacoes, $raios))
+            ->map(fn (Corrida $corrida) => $this->montarOferta($corrida, $status, $reputacoes, $raios, $veiculo))
             ->filter()
             ->sortBy('distancia_ate_origem_km')
             ->values();
@@ -198,31 +206,6 @@ class DespachoCorridaService
     public function aceitar(Motorista $motorista, int $corridaId): Corrida
     {
         return DB::transaction(function () use ($motorista, $corridaId) {
-            $ocupado = Corrida::where('motorista_id', $motorista->id)
-                ->whereIn('status_corrida', self::STATUS_ATIVOS_MOTORISTA)
-                ->exists();
-
-            if ($ocupado) {
-                throw new RuntimeException('Você já está em uma corrida.', 409);
-            }
-
-            $status = StatusBusca::where('motorista_id', $motorista->id)
-                ->lockForUpdate()
-                ->first();
-
-            if ($status === null || ! $status->disponivel) {
-                throw new RuntimeException('Você precisa estar disponível para aceitar corridas.', 409);
-            }
-
-            if ($this->onlineExpirou($status)) {
-                $status->update(['disponivel' => false]);
-                throw new RuntimeException('Sua sessão online expirou. Conecte-se novamente.', 409);
-            }
-
-            if ($status->latitude === null || $status->longitude === null) {
-                throw new RuntimeException('Posição do motorista desconhecida.', 422);
-            }
-
             $corrida = Corrida::whereKey($corridaId)->lockForUpdate()->first();
 
             if ($corrida === null) {
@@ -233,30 +216,25 @@ class DespachoCorridaService
                 throw new RuntimeException('Esta corrida já foi aceita por outro motorista.', 409);
             }
 
-            $corrida->load('corrida_destinos');
-            $raios = $this->raiosDasTarifas(collect([$corrida]));
+            [$status, $veiculo, $opcao] = $this->validarMotoristaParaCorrida($motorista, $corrida);
 
-            if (! $this->estaNoRaioAtual($corrida, $status, $raios)) {
-                throw new RuntimeException('Esta corrida ainda não está disponível na sua região.', 409);
+            // pedido com várias categorias fica com a do motorista que aceitou
+            if ($opcao !== null && $opcao->produto_id !== $corrida->produto_id) {
+                $corrida->update([
+                    'produto_id' => $opcao->produto_id,
+                    'tarifa_id' => $opcao->tarifa_id,
+                    'valor_estimado_inicial' => $opcao->valor_passageiro,
+                ]);
+                CorridaFinanceiro::where('corrida_id', $corrida->id)
+                    ->update(SolicitarCorridaService::valoresDaCategoria($opcao->categoria));
             }
-
-            $veiculoId = $status->veiculo_id !== null
-                ? $status->veiculo_id
-                : $this->veiculoPadrao($motorista);
-
-            $origemAceite = $corrida->corrida_destinos->firstWhere('tipo', 'origem');
 
             $corrida->update([
                 'motorista_id' => $motorista->id,
-                'veiculo_id' => $veiculoId,
+                'veiculo_id' => $veiculo?->id,
                 'status_corrida' => 'aceita',
                 'tempo_aceite' => now(),
-                'distancia_motorista_aceite_km' => $origemAceite === null ? null : round($this->distanciaKm(
-                    (float) $status->latitude,
-                    (float) $status->longitude,
-                    (float) $origemAceite->latitude,
-                    (float) $origemAceite->longitude
-                ), 3),
+                'distancia_motorista_aceite_km' => $this->distanciaAteOEmbarque($corrida, $status),
             ]);
 
             StatusBusca::where('motorista_id', $motorista->id)
@@ -267,6 +245,74 @@ class DespachoCorridaService
 
             return $corrida->fresh(['corrida_destinos', 'corrida_financeiro']);
         });
+    }
+
+    /**
+     * Confere se o motorista pode pegar a corrida agora: online, livre, no
+     * raio de busca e com veículo da categoria pedida. Chamar dentro da
+     * transação, com a corrida travada.
+     *
+     * @return array{0: StatusBusca, 1: Veiculo|null, 2: CorridaOpcao|null}
+     */
+    public function validarMotoristaParaCorrida(Motorista $motorista, Corrida $corrida): array
+    {
+        $ocupado = Corrida::where('motorista_id', $motorista->id)
+            ->whereKeyNot($corrida->id)
+            ->whereIn('status_corrida', self::STATUS_ATIVOS_MOTORISTA)
+            ->exists();
+
+        if ($ocupado) {
+            throw new RuntimeException('Você já está em uma corrida.', 409);
+        }
+
+        $status = StatusBusca::where('motorista_id', $motorista->id)
+            ->lockForUpdate()
+            ->first();
+
+        if ($status === null || ! $status->disponivel) {
+            throw new RuntimeException('Você precisa estar disponível para aceitar corridas.', 409);
+        }
+
+        if ($this->onlineExpirou($status)) {
+            $status->update(['disponivel' => false]);
+            throw new RuntimeException('Sua sessão online expirou. Conecte-se novamente.', 409);
+        }
+
+        if ($status->latitude === null || $status->longitude === null) {
+            throw new RuntimeException('Posição do motorista desconhecida.', 422);
+        }
+
+        $corrida->load(['corrida_destinos', 'produto', 'opcoes.produto']);
+        $raios = $this->raiosDasTarifas(collect([$corrida]));
+
+        if (! $this->estaNoRaioAtual($corrida, $status, $raios)) {
+            throw new RuntimeException('Esta corrida ainda não está disponível na sua região.', 409);
+        }
+
+        $veiculo = $this->veiculoEmUso($motorista, $status);
+        $opcao = $this->opcaoParaOVeiculo($corrida, $veiculo);
+
+        if (! $this->veiculoAtendeACorrida($corrida, $veiculo, $opcao)) {
+            throw new RuntimeException('Seu veículo não atende a categoria pedida nesta corrida.', 409);
+        }
+
+        return [$status, $veiculo, $opcao];
+    }
+
+    public function distanciaAteOEmbarque(Corrida $corrida, StatusBusca $status): ?float
+    {
+        $origem = $corrida->corrida_destinos->firstWhere('tipo', 'origem');
+
+        if ($origem === null || $status->latitude === null || $status->longitude === null) {
+            return null;
+        }
+
+        return round($this->distanciaKm(
+            (float) $status->latitude,
+            (float) $status->longitude,
+            (float) $origem->latitude,
+            (float) $origem->longitude
+        ), 3);
     }
 
     /**
@@ -591,7 +637,7 @@ class DespachoCorridaService
      * @param  array<int, mixed>  $raios
      * @return non-empty-array<string, mixed>|null
      */
-    private function montarOferta(Corrida $corrida, StatusBusca $status, array $reputacoes, array $raios): ?array
+    private function montarOferta(Corrida $corrida, StatusBusca $status, array $reputacoes, array $raios, ?Veiculo $veiculo): ?array
     {
         $origem = $corrida->corrida_destinos->firstWhere('tipo', 'origem');
 
@@ -611,13 +657,17 @@ class DespachoCorridaService
         }
 
         $destino = $corrida->corrida_destinos->firstWhere('tipo', 'destino');
+        // com várias categorias no pedido, o motorista vê o valor da dele
+        $opcao = $this->opcaoParaOVeiculo($corrida, $veiculo);
 
         return [
             'corrida_id' => $corrida->id,
             'codigo_corrida' => $corrida->codigo_corrida,
             'distancia_ate_origem_km' => round($distancia, 2),
             'distancia_corrida_km' => (float) $corrida->distancia_total,
-            'valor_motorista' => (float) ($corrida->corrida_financeiro->valor_motorista ?? 0),
+            'valor_motorista' => $opcao->valor_motorista ?? (float) ($corrida->corrida_financeiro->valor_motorista ?? 0),
+            'categoria' => $opcao?->produto?->nome,
+            'metodo_pagamento' => $corrida->metodo_pagamento,
             'origem' => $origem->endereco,
             'destino' => $destino?->endereco,
             'paradas' => $corrida->corrida_destinos->where('tipo', 'parada')->count(),
@@ -739,6 +789,67 @@ class DespachoCorridaService
     {
         return MotoristaVeiculo::where('motorista_id', $motorista->id)
             ->value('veiculo_id');
+    }
+
+    private function veiculoEmUso(Motorista $motorista, StatusBusca $status): ?Veiculo
+    {
+        $veiculoId = $status->veiculo_id ?? $this->veiculoPadrao($motorista);
+
+        return $veiculoId === null ? null : Veiculo::find($veiculoId);
+    }
+
+    /**
+     * Só chega ao motorista a corrida pedida numa categoria que o veículo dele
+     * atende (moto não recebe Pop; Elétrico só carro elétrico). Corrida sem
+     * categoria vai para todos.
+     *
+     * @param  Builder<Corrida>  $consulta
+     */
+    private function queOVeiculoAtende(Builder $consulta, ?Veiculo $veiculo): void
+    {
+        $produtos = $veiculo === null
+            ? []
+            : ProdutosCorrida::atendidosPor($veiculo)->pluck('id')->all();
+
+        $consulta
+            ->whereNull('produto_id')
+            ->orWhereHas('opcoes', fn (Builder $opcao) => $opcao->whereIn('produto_id', $produtos))
+            ->orWhere(fn (Builder $semOpcoes) => $semOpcoes
+                ->whereDoesntHave('opcoes')
+                ->whereIn('produto_id', $produtos));
+    }
+
+    /**
+     * Entre as categorias aceitas no pedido, a que o veículo atende. A mais
+     * específica vence (um carro elétrico com Pop e Elétrico no pedido fica
+     * com Elétrico); empate fica com a de maior valor para o motorista.
+     */
+    private function opcaoParaOVeiculo(Corrida $corrida, ?Veiculo $veiculo): ?CorridaOpcao
+    {
+        if ($veiculo === null) {
+            return null;
+        }
+
+        return $corrida->opcoes
+            ->filter(fn (CorridaOpcao $opcao) => $opcao->produto?->atendidoPor($veiculo) ?? false)
+            ->sortByDesc(fn (CorridaOpcao $opcao) => [
+                $opcao->produto?->requisito_veiculo !== null,
+                $opcao->valor_motorista,
+            ])
+            ->first();
+    }
+
+    private function veiculoAtendeACorrida(Corrida $corrida, ?Veiculo $veiculo, ?CorridaOpcao $opcao): bool
+    {
+        if ($corrida->opcoes->isNotEmpty()) {
+            return $opcao !== null;
+        }
+
+        if ($corrida->produto === null) {
+            return true;
+        }
+
+        return $veiculo !== null && $corrida->produto->atendidoPor($veiculo);
     }
 
     private function onlineExpirou(?StatusBusca $status): bool

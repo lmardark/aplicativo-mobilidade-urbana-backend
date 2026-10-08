@@ -75,6 +75,14 @@ class Corrida extends Model
     }
 
     /**
+     * @return HasMany<CorridaOpcao, $this>
+     */
+    public function opcoes(): HasMany
+    {
+        return $this->hasMany(CorridaOpcao::class);
+    }
+
+    /**
      * @return HasMany<CorridaAlteracaoDestino, $this>
      */
     public function alteracoesDestino(): HasMany

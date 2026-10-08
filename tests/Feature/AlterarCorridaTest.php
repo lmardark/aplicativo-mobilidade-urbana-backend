@@ -210,6 +210,47 @@ it('antes do aceite altera o destino imediatamente e recalcula a oferta', functi
         ->toBe('Destino novo, 123');
 });
 
+it('antes do aceite o novo trajeto reprecifica cada categoria aceita no pedido', function () use ($novoDestino) {
+    [$corrida, $passageiro] = criarCorridaAlteravel('solicitada');
+    $moto = ProdutosCorrida::create(['codigo' => 'moto', 'nome' => 'Moto', 'estrategia_precificacao' => 'normal']);
+    $tarifaMoto = Tarifa::create([
+        'produto_id' => $moto->id,
+        'horario_inicio' => '00:00:00',
+        'horario_fim' => '23:59:59',
+        'dias_semana' => '[1,2,3,4,5,6,7]',
+        'vira_dia' => false,
+        'valor_minimo_corrida' => 5.00,
+        'tarifa_base' => 1.00,
+        'valor_por_km' => 0.90,
+        'valor_por_minuto' => 0.16,
+        'valor_por_minuto_espera' => 0.20,
+        'taxa_plataforma_percentual' => 6.00,
+        'raio_busca_motorista_km' => 5,
+        'ativo' => true,
+    ]);
+    foreach ([[$corrida->produto_id, $corrida->tarifa_id], [$moto->id, $tarifaMoto->id]] as [$produtoId, $tarifaId]) {
+        $corrida->opcoes()->create([
+            'produto_id' => $produtoId,
+            'tarifa_id' => $tarifaId,
+            'valor_passageiro' => 1,
+            'valor_motorista' => 1,
+            'categoria' => [],
+        ]);
+    }
+
+    $this->actingAs($passageiro->user, 'jwt')
+        ->postJson("/api/corridas/{$corrida->id}/destino", $novoDestino)
+        ->assertOk();
+
+    // 10 km e 20 min: Pop 2 + 15,50 + 5,60; Moto 1 + 9 + 3,20 (taxa de 6%)
+    $opcoes = $corrida->opcoes()->get()->keyBy('produto_id');
+    expect($opcoes[$corrida->produto_id]->valor_motorista)->toBe(23.10)
+        ->and($opcoes[$corrida->produto_id]->valor_passageiro)->toBe(24.57)
+        ->and($opcoes[$moto->id]->valor_motorista)->toBe(13.20)
+        ->and($opcoes[$moto->id]->valor_passageiro)->toBe(14.04)
+        ->and($opcoes[$moto->id]->categoria['valores']['valor_motorista'])->toBe(13.2);
+});
+
 it('edita o itinerário completo com paradas antes de encontrar motorista', function () {
     [$corrida, $passageiro] = criarCorridaAlteravel('em_busca');
 

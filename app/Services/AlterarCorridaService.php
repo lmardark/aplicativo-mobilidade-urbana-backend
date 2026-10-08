@@ -179,6 +179,7 @@ class AlterarCorridaService
 
             if ($semMotorista) {
                 $this->aplicar($corrida, $alteracao, $orcamento);
+                $this->reprecificarOpcoes($corrida, $orcamento['distancia_km'], $orcamento['tempo_min']);
                 $alteracao->update(['status' => 'aplicada', 'respondida_em' => now()]);
                 Avisar::semQuebrar(new CorridasDisponiveisAlteradas);
             }
@@ -459,6 +460,29 @@ class AlterarCorridaService
             'taxa_plataforma' => ($passageiroCentavos - $motoristaCentavos) / 100,
             'composicao' => $preco['composicao'] + ['espera_motorista' => $esperaMotoristaCentavos / 100],
         ];
+    }
+
+    /**
+     * Ainda sem motorista, cada categoria aceita no pedido passa a valer o
+     * novo trajeto: quem aceitar depois recebe o preço certo da sua categoria.
+     */
+    private function reprecificarOpcoes(Corrida $corrida, float $distanciaKm, float $tempoMin): void
+    {
+        foreach ($corrida->opcoes()->get() as $opcao) {
+            $tarifa = $opcao->tarifa_id === null ? null : Tarifa::find($opcao->tarifa_id);
+
+            if ($tarifa === null) {
+                continue;
+            }
+
+            $preco = $this->calcularPrecoCorridaService->executar($tarifa, $distanciaKm, $tempoMin);
+
+            $opcao->update([
+                'valor_passageiro' => $preco['valores']['valor_passageiro'],
+                'valor_motorista' => $preco['valores']['valor_motorista'],
+                'categoria' => $preco,
+            ]);
+        }
     }
 
     /**

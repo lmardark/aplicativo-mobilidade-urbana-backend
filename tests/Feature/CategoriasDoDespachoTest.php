@@ -1,0 +1,287 @@
+<?php
+
+use App\Models\CobrancaPix;
+use App\Models\Corrida;
+use App\Models\CotacaoCorrida;
+use App\Models\Motorista;
+use App\Models\MotoristaVeiculo;
+use App\Models\Passageiro;
+use App\Models\ProdutosCorrida;
+use App\Models\StatusBusca;
+use App\Models\User;
+use App\Models\Veiculo;
+use App\Services\DespachoCorridaService;
+use App\Services\PagamentoCorridaService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    Http::fake();
+
+    foreach ([
+        ['negocia', 'Negocia', 'negociada', 'negocia', 'carro', null],
+        ['pop', 'Pop', 'normal', 'normal', 'carro', null],
+        ['moto', 'Moto', 'normal', 'normal', 'moto', null],
+        ['carro_eletrico', 'Carro Elétrico', 'eletrico', 'eletrico', 'carro', 'eletrico'],
+        ['taxi', 'Táxi', 'taxi', 'taxi', 'carro', 'taxi'],
+    ] as $ordem => [$codigo, $nome, $estrategia, $grupo, $tipo, $requisito]) {
+        ProdutosCorrida::create([
+            'codigo' => $codigo,
+            'nome' => $nome,
+            'estrategia_precificacao' => $estrategia,
+            'grupo' => $grupo,
+            'tipo_veiculo' => $tipo,
+            'requisito_veiculo' => $requisito,
+            'ordem' => $ordem,
+        ]);
+    }
+});
+
+function catUsuario(string $prefixo): User
+{
+    $id = str_replace('-', '', (string) Str::uuid());
+
+    return User::create([
+        'name' => "Teste $prefixo",
+        'telefone' => substr('69'.preg_replace('/\D/', '', $id).'000000000', 0, 11),
+        'cpf' => substr(preg_replace('/\D/', '', $id).'00000000000', 0, 11),
+        'data_nascimento' => '1990-01-01',
+        'email' => "$prefixo-$id@example.test",
+        'status' => 'ativo',
+        'password' => 'senha-de-teste',
+    ]);
+}
+
+/**
+ * @param  array{eletrico?: bool, taxi?: bool}  $marcas
+ */
+function catMotorista(?string $tipoVeiculo, array $marcas = []): Motorista
+{
+    $motorista = Motorista::create(['user_id' => catUsuario('motorista')->id, 'status' => 'aprovado']);
+
+    if ($tipoVeiculo !== null) {
+        $veiculo = Veiculo::create([
+            'marca' => 'Teste',
+            'modelo' => 'Teste',
+            'ano_fabricacao' => 2024,
+            'ano_modelo' => 2024,
+            'cor' => 'Preto',
+            'placa' => 'TST'.random_int(1000, 9999),
+            'renavam' => (string) random_int(10000000000, 99999999999),
+            'categoria' => $tipoVeiculo,
+            'eletrico' => $marcas['eletrico'] ?? false,
+            'taxi' => $marcas['taxi'] ?? false,
+            'status' => 'aprovado',
+            'uf' => 'RO',
+        ]);
+        MotoristaVeiculo::create(['motorista_id' => $motorista->id, 'veiculo_id' => $veiculo->id]);
+    }
+
+    StatusBusca::create([
+        'motorista_id' => $motorista->id,
+        'disponivel' => true,
+        'latitude' => -8.7601,
+        'longitude' => -63.9004,
+        'visto_em' => now(),
+    ]);
+
+    return $motorista;
+}
+
+function catPassageiro(): Passageiro
+{
+    return Passageiro::create(['user_id' => catUsuario('passageiro')->id]);
+}
+
+/**
+ * @param  array<string, float>  $precos  código do produto => valor do passageiro
+ */
+function catCotacao(Passageiro $passageiro, array $precos): CotacaoCorrida
+{
+    $categorias = [];
+
+    foreach ($precos as $codigo => $valor) {
+        $produto = ProdutosCorrida::where('codigo', $codigo)->firstOrFail();
+        $motorista = round($valor * 0.94, 2);
+
+        $categorias[] = [
+            'tarifa_id' => null,
+            'produto' => [
+                'id' => $produto->id,
+                'codigo' => $produto->codigo,
+                'nome' => $produto->nome,
+                'estrategia_precificacao' => $produto->estrategia_precificacao,
+                'grupo' => $produto->grupo,
+            ],
+            'composicao' => [
+                'subtotal' => $motorista,
+                'tarifa_base' => 2,
+                'valor_distancia' => 5,
+                'valor_tempo' => 1,
+                'valor_por_minuto_espera' => 0.3,
+                'diferenca_negociada' => 0,
+            ],
+            'valores' => [
+                'valor_passageiro' => $valor,
+                'valor_motorista' => $motorista,
+                'taxa_plataforma' => round($valor - $motorista, 2),
+                'taxa_plataforma_percentual' => 6,
+            ],
+        ];
+    }
+
+    return CotacaoCorrida::create([
+        'user_id' => $passageiro->user_id,
+        'distancia_km' => 4,
+        'tempo_min' => 10,
+        'enderecos' => [
+            ['order' => 0, 'latitude' => -8.7600, 'longitude' => -63.9004, 'formattedAddress' => 'Embarque'],
+            ['order' => 1, 'latitude' => -8.7400, 'longitude' => -63.8800, 'formattedAddress' => 'Destino'],
+        ],
+        'categorias' => $categorias,
+        'expira_em' => now()->addMinutes(10),
+    ]);
+}
+
+/**
+ * @param  array<string, float>  $precos
+ */
+function catPedir(Passageiro $passageiro, array $precos, string $metodo = 'dinheiro'): Corrida
+{
+    $resposta = test()->actingAs($passageiro->user, 'jwt')->postJson('/api/corridas', [
+        'cotacao_id' => catCotacao($passageiro, $precos)->id,
+        'produtos_codigos' => array_keys($precos),
+        'metodo_pagamento' => $metodo,
+    ])->assertCreated();
+
+    return Corrida::findOrFail($resposta->json('id'));
+}
+
+function catOfertadas(Motorista $motorista): array
+{
+    return app(DespachoCorridaService::class)->ofertasPara($motorista)->pluck('corrida_id')->all();
+}
+
+it('só oferece a corrida a quem tem veículo da categoria pedida', function () {
+    $pop = catPedir(catPassageiro(), ['pop' => 12.0]);
+
+    expect(catOfertadas(catMotorista('carro')))->toBe([$pop->id])
+        ->and(catOfertadas(catMotorista('moto')))->toBe([])
+        ->and(catOfertadas(catMotorista(null)))->toBe([]);
+});
+
+it('Elétrico e Táxi só chegam a quem tem o veículo marcado; elétrico também roda Pop', function () {
+    $eletrica = catPedir(catPassageiro(), ['carro_eletrico' => 14.0]);
+    $taxi = catPedir(catPassageiro(), ['taxi' => 16.0]);
+    $pop = catPedir(catPassageiro(), ['pop' => 12.0]);
+
+    expect(catOfertadas(catMotorista('carro')))->toEqualCanonicalizing([$pop->id])
+        ->and(catOfertadas(catMotorista('carro', ['eletrico' => true])))->toEqualCanonicalizing([$eletrica->id, $pop->id])
+        ->and(catOfertadas(catMotorista('carro', ['taxi' => true])))->toEqualCanonicalizing([$taxi->id, $pop->id]);
+});
+
+it('pedido com Pop e Moto vai para os dois e fica com a categoria de quem aceitou', function () {
+    $corrida = catPedir(catPassageiro(), ['pop' => 12.0, 'moto' => 7.0]);
+    $moto = catMotorista('moto');
+
+    // reserva a mais cara até alguém aceitar
+    expect($corrida->produto_id)->toBe(ProdutosCorrida::where('codigo', 'pop')->value('id'))
+        ->and((float) $corrida->corrida_financeiro->valor_pago_passageiro)->toBe(12.0)
+        ->and(catOfertadas(catMotorista('carro')))->toBe([$corrida->id]);
+
+    $oferta = app(DespachoCorridaService::class)->ofertasPara($moto)->first();
+    expect($oferta['categoria'])->toBe('Moto')
+        ->and($oferta['valor_motorista'])->toBe(6.58);
+
+    app(DespachoCorridaService::class)->aceitar($moto, $corrida->id);
+
+    $corrida->refresh();
+    expect($corrida->produto_id)->toBe(ProdutosCorrida::where('codigo', 'moto')->value('id'))
+        ->and((float) $corrida->valor_estimado_inicial)->toBe(7.0)
+        ->and((float) $corrida->corrida_financeiro->valor_pago_passageiro)->toBe(7.0)
+        ->and((float) $corrida->corrida_financeiro->valor_motorista)->toBe(6.58);
+});
+
+it('carro elétrico com Pop e Elétrico no pedido fica com Elétrico', function () {
+    $corrida = catPedir(catPassageiro(), ['pop' => 12.0, 'carro_eletrico' => 14.0]);
+
+    app(DespachoCorridaService::class)->aceitar(catMotorista('carro', ['eletrico' => true]), $corrida->id);
+
+    expect($corrida->refresh()->produto_id)->toBe(ProdutosCorrida::where('codigo', 'carro_eletrico')->value('id'));
+});
+
+it('recusa o aceite de quem não tem veículo da categoria', function () {
+    $corrida = catPedir(catPassageiro(), ['pop' => 12.0]);
+
+    expect(fn () => app(DespachoCorridaService::class)->aceitar(catMotorista('moto'), $corrida->id))
+        ->toThrow(RuntimeException::class, 'Seu veículo não atende a categoria pedida nesta corrida.');
+
+    expect($corrida->refresh()->status_corrida)->toBe('solicitada');
+});
+
+it('Negocia não é pedido junto com outras categorias', function () {
+    $passageiro = catPassageiro();
+
+    $this->actingAs($passageiro->user, 'jwt')->postJson('/api/corridas', [
+        'cotacao_id' => catCotacao($passageiro, ['negocia' => 10.0, 'pop' => 12.0])->id,
+        'produtos_codigos' => ['negocia', 'pop'],
+        'metodo_pagamento' => 'dinheiro',
+    ])->assertStatus(422)->assertJsonPath('message', 'O Negocia é pedido sozinho, sem outras categorias.');
+});
+
+it('no Pix cobra a mais cara e devolve a diferença em crédito ao fim', function () {
+    $passageiro = catPassageiro();
+    $corrida = catPedir($passageiro, ['pop' => 12.0, 'moto' => 7.0], 'dinheiro');
+    // simula o pedido pago no Pix pela categoria mais cara
+    $corrida->update(['metodo_pagamento' => 'pix', 'status_pagamento' => 'pago']);
+    CobrancaPix::create([
+        'corrida_id' => $corrida->id,
+        'charge_id' => 'pix_multi',
+        'status' => 'PAID',
+        'valor_centavos' => 1200,
+        'br_code' => 'x',
+        'br_code_base64' => 'x',
+        'dev_mode' => true,
+        'expira_em' => now()->addMinutes(10),
+        'pago_em' => now(),
+    ]);
+
+    $moto = catMotorista('moto');
+    app(DespachoCorridaService::class)->aceitar($moto, $corrida->id);
+    $corrida->refresh()->update(['status_corrida' => 'finalizada']);
+    app(PagamentoCorridaService::class)->liquidar($corrida);
+
+    expect(app(PagamentoCorridaService::class)->saldoCredito($passageiro->id))->toBe(5.0)
+        ->and($corrida->refresh()->status_pagamento)->toBe('pago');
+});
+
+it('veículo só pode ser carro ou moto, e elétrico só carro', function () {
+    $motorista = Motorista::create(['user_id' => catUsuario('cadastro')->id, 'status' => 'aprovado']);
+    $dados = [
+        'marca' => 'Honda',
+        'modelo' => 'CG',
+        'ano_fabricacao' => 2022,
+        'ano_modelo' => 2022,
+        'cor' => 'Vermelha',
+        'placa' => 'ABC1D23',
+        'renavam' => '12345678901',
+        'uf' => 'RO',
+    ];
+
+    $this->actingAs($motorista->user, 'jwt')
+        ->postJson('/api/motorista/me/veiculos', $dados + ['categoria' => 'bicicleta'])
+        ->assertStatus(422)->assertJsonValidationErrors('categoria');
+
+    $this->actingAs($motorista->user, 'jwt')
+        ->postJson('/api/motorista/me/veiculos', $dados + ['categoria' => 'moto', 'eletrico' => true])
+        ->assertStatus(422)->assertJsonValidationErrors('eletrico');
+
+    $this->actingAs($motorista->user, 'jwt')
+        ->postJson('/api/motorista/me/veiculos', $dados + ['categoria' => 'carro', 'eletrico' => true, 'taxi' => true])
+        ->assertCreated()
+        ->assertJsonPath('data.eletrico', true)
+        ->assertJsonPath('data.taxi', true);
+});

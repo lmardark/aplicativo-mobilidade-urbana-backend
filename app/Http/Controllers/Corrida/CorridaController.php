@@ -285,6 +285,7 @@ class CorridaController extends Controller
                 'corrida_destinos',
                 'corrida_financeiro',
                 'produto:id,nome',
+                'opcoes.produto:id,nome,codigo',
             ])
             ->orderByDesc('id')
             ->first();
@@ -471,7 +472,10 @@ class CorridaController extends Controller
 
         $dados = $request->validate([
             'cotacao_id' => 'required|uuid',
-            'produto_codigo' => 'required|string|max:60',
+            'produto_codigo' => 'required_without:produtos_codigos|string|max:60',
+            // várias categorias de uma vez (ex.: Pop e Moto): vai quem atender primeiro
+            'produtos_codigos' => 'sometimes|array|min:1|max:8',
+            'produtos_codigos.*' => 'string|max:60|distinct',
             'metodo_pagamento' => 'nullable|in:dinheiro,cartao,pix',
             'convidado' => 'nullable|array',
             'convidado.nome' => 'required_with:convidado|string|min:2|max:60',
@@ -496,7 +500,7 @@ class CorridaController extends Controller
             $corrida = $this->solicitarCorridaService->executar(
                 usuario: $request->user(),
                 cotacao: $cotacao,
-                produtoCodigo: (string) $dados['produto_codigo'],
+                produtosCodigos: array_values(array_map('strval', $dados['produtos_codigos'] ?? [$dados['produto_codigo']])),
                 metodoPagamento: $dados['metodo_pagamento'] ?? null,
                 convidado: $dados['convidado'] ?? null
             );
