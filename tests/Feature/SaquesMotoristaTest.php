@@ -81,6 +81,14 @@ function corridaPaga(Motorista $motorista, string $metodo, float $liquido, float
     ]);
 }
 
+function codigoDoSaque(Motorista $motorista): string
+{
+    return (string) test()->actingAs($motorista->user, 'jwt')
+        ->postJson('/api/motorista/me/metodos-resgate/codigo')
+        ->assertOk()
+        ->json('codigo_teste');
+}
+
 function cadastrarPix(Motorista $motorista): void
 {
     test()->actingAs($motorista->user, 'jwt')
@@ -89,6 +97,7 @@ function cadastrarPix(Motorista $motorista): void
             'pix_tipo' => 'cpf',
             'pix_chave' => '529.982.247-25',
             'documento' => '529.982.247-25',
+            'codigo' => codigoDoSaque($motorista),
         ])
         ->assertCreated();
 }
@@ -102,6 +111,7 @@ it('cadastra a chave pix e ela vira o método principal', function () {
             'pix_tipo' => 'email',
             'pix_chave' => ' Motorista@Exemplo.com ',
             'documento' => '11.222.333/0001-81',
+            'codigo' => codigoDoSaque($motorista),
         ])
         ->assertCreated()
         ->assertJsonPath('data.pix_chave', 'motorista@exemplo.com')
@@ -113,6 +123,25 @@ it('cadastra a chave pix e ela vira o método principal', function () {
         ->getJson('/api/motorista/me/metodos-resgate')
         ->assertOk()
         ->assertJsonCount(1, 'data');
+});
+
+it('trocar a chave pix exige o código enviado por sms', function () {
+    $motorista = motoristaDoSaque();
+    cadastrarPix($motorista);
+
+    $this->actingAs($motorista->user, 'jwt')
+        ->postJson('/api/motorista/me/metodos-resgate', [
+            'tipo' => 'pix',
+            'pix_tipo' => 'email',
+            'pix_chave' => 'golpista@exemplo.com',
+            'documento' => '529.982.247-25',
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['codigo']);
+
+    $this->actingAs($motorista->user, 'jwt')
+        ->getJson('/api/motorista/me/metodos-resgate')
+        ->assertJsonPath('data.0.pix_chave', '52998224725');
 });
 
 it('recusa chave pix ou documento que não batem com o tipo', function () {
