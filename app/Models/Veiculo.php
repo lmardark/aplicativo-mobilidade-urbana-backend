@@ -13,8 +13,10 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $cor
  * @property string $placa
  * @property string $categoria carro ou moto
- * @property bool $eletrico
- * @property bool $taxi
+ * @property bool $eletrico aprovado pela gestão: recebe corridas Elétrico
+ * @property bool $taxi aprovado pela gestão: recebe corridas Táxi
+ * @property bool $eletrico_solicitado pedido do motorista, em análise
+ * @property bool $taxi_solicitado pedido do motorista, em análise
  */
 class Veiculo extends Model
 {
@@ -32,6 +34,8 @@ class Veiculo extends Model
         'categoria',
         'eletrico',
         'taxi',
+        'eletrico_solicitado',
+        'taxi_solicitado',
         'status',
         'uf',
     ];
@@ -44,6 +48,8 @@ class Veiculo extends Model
         return [
             'eletrico' => 'boolean',
             'taxi' => 'boolean',
+            'eletrico_solicitado' => 'boolean',
+            'taxi_solicitado' => 'boolean',
         ];
     }
 }

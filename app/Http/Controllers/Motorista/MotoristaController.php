@@ -164,8 +164,13 @@ class MotoristaController extends Controller
         }
 
         $veiculo = DB::transaction(function () use ($dados, $motorista): Veiculo {
+            // elétrico e táxi são só pedidos: valem depois que a gestão confere
             $veiculo = Veiculo::create([
-                ...$dados,
+                ...array_diff_key($dados, array_flip(['eletrico', 'taxi'])),
+                'eletrico' => false,
+                'taxi' => false,
+                'eletrico_solicitado' => (bool) ($dados['eletrico'] ?? false),
+                'taxi_solicitado' => (bool) ($dados['taxi'] ?? false),
                 'status' => 'aprovado',
             ]);
 

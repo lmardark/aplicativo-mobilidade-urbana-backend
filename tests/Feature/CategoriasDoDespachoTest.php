@@ -279,9 +279,51 @@ it('veículo só pode ser carro ou moto, e elétrico só carro', function () {
         ->postJson('/api/motorista/me/veiculos', $dados + ['categoria' => 'moto', 'eletrico' => true])
         ->assertStatus(422)->assertJsonValidationErrors('eletrico');
 
+    // elétrico e táxi entram como pedido; quem libera é a gestão
     $this->actingAs($motorista->user, 'jwt')
         ->postJson('/api/motorista/me/veiculos', $dados + ['categoria' => 'carro', 'eletrico' => true, 'taxi' => true])
         ->assertCreated()
+        ->assertJsonPath('data.eletrico', false)
+        ->assertJsonPath('data.taxi', false)
+        ->assertJsonPath('data.eletrico_solicitado', true)
+        ->assertJsonPath('data.taxi_solicitado', true);
+});
+
+it('o pedido de elétrico só traz corridas Elétrico depois que a gestão aprova', function () {
+    $motorista = catMotorista('carro');
+    $veiculo = Veiculo::findOrFail(MotoristaVeiculo::where('motorista_id', $motorista->id)->value('veiculo_id'));
+    $veiculo->update(['eletrico_solicitado' => true]);
+    $eletrica = catPedir(catPassageiro(), ['carro_eletrico' => 14.0]);
+
+    expect(catOfertadas($motorista))->toBe([]);
+
+    $this->actingAs(catUsuario('gestao'), 'jwt')
+        ->patchJson("/api/veiculos/{$veiculo->id}", ['eletrico' => true])
+        ->assertStatus(201)
         ->assertJsonPath('data.eletrico', true)
-        ->assertJsonPath('data.taxi', true);
+        ->assertJsonPath('data.eletrico_solicitado', false);
+
+    expect(catOfertadas($motorista))->toBe([$eletrica->id]);
+});
+
+it('o motorista não fica online com o veículo de outro', function () {
+    $dono = catMotorista('carro', ['eletrico' => true]);
+    $veiculoAlheio = MotoristaVeiculo::where('motorista_id', $dono->id)->value('veiculo_id');
+    $espertinho = catMotorista('moto');
+
+    $this->actingAs($espertinho->user, 'jwt')
+        ->postJson('/api/motorista/disponibilidade', [
+            'disponivel' => true,
+            'latitude' => -8.7601,
+            'longitude' => -63.9004,
+            'veiculo_id' => $veiculoAlheio,
+        ])
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'Este veículo não está no seu cadastro.');
+
+    // mesmo gravado direto no status, o despacho ignora o veículo alheio
+    StatusBusca::where('motorista_id', $espertinho->id)->update(['veiculo_id' => $veiculoAlheio]);
+    $eletrica = catPedir(catPassageiro(), ['carro_eletrico' => 14.0]);
+
+    expect(catOfertadas($espertinho))->not->toContain($eletrica->id);
 });

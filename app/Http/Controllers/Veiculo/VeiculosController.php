@@ -93,9 +93,17 @@ class VeiculosController extends Controller
         ]);
 
         $veiculo->fill($dados);
+        // a gestão decidindo elétrico ou táxi encerra o pedido do motorista
+        if (array_key_exists('eletrico', $dados)) {
+            $veiculo->eletrico_solicitado = false;
+        }
+        if (array_key_exists('taxi', $dados)) {
+            $veiculo->taxi_solicitado = false;
+        }
         // não existe moto elétrica: trocar para moto tira a marcação
         if ($veiculo->categoria === 'moto') {
             $veiculo->eletrico = false;
+            $veiculo->eletrico_solicitado = false;
         }
         $veiculo->save();
 

@@ -825,7 +825,11 @@ class DespachoCorridaService
 
     private function veiculoEmUso(Motorista $motorista, StatusBusca $status): ?Veiculo
     {
-        $veiculoId = $status->veiculo_id ?? $this->veiculoPadrao($motorista);
+        // o veículo marcado na disponibilidade só vale se for do motorista
+        $doMotorista = $status->veiculo_id !== null && MotoristaVeiculo::where('motorista_id', $motorista->id)
+            ->where('veiculo_id', $status->veiculo_id)
+            ->exists();
+        $veiculoId = $doMotorista ? $status->veiculo_id : $this->veiculoPadrao($motorista);
 
         return $veiculoId === null ? null : Veiculo::find($veiculoId);
     }
