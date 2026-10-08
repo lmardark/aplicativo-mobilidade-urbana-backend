@@ -306,6 +306,20 @@ it('o pedido de elétrico só traz corridas Elétrico depois que a gestão aprov
     expect(catOfertadas($motorista))->toBe([$eletrica->id]);
 });
 
+it('o motorista não aprova elétrico ou táxi no próprio veículo', function () {
+    $motorista = catMotorista('carro');
+    $veiculo = Veiculo::findOrFail(MotoristaVeiculo::where('motorista_id', $motorista->id)->value('veiculo_id'));
+    $veiculo->update(['taxi_solicitado' => true]);
+
+    $this->actingAs($motorista->user, 'jwt')
+        ->patchJson("/api/veiculos/{$veiculo->id}", ['taxi' => true])
+        ->assertForbidden()
+        ->assertJsonPath('message', 'Você não pode aprovar elétrico ou táxi no seu próprio veículo.');
+
+    expect($veiculo->refresh()->taxi)->toBeFalse()
+        ->and($veiculo->taxi_solicitado)->toBeTrue();
+});
+
 it('o motorista não fica online com o veículo de outro', function () {
     $dono = catMotorista('carro', ['eletrico' => true]);
     $veiculoAlheio = MotoristaVeiculo::where('motorista_id', $dono->id)->value('veiculo_id');

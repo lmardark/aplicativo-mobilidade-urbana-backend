@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Veiculo;
 
 use App\Http\Controllers\Controller;
+use App\Models\Motorista;
+use App\Models\MotoristaVeiculo;
 use App\Models\Veiculo;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -91,6 +93,18 @@ class VeiculosController extends Controller
             'status' => 'sometimes|required|string',
             'uf' => 'sometimes|required|string|size:2',
         ]);
+
+        // ninguém aprova elétrico ou táxi no próprio veículo
+        $decideCategoria = array_key_exists('eletrico', $dados) || array_key_exists('taxi', $dados);
+        $motoristaDoUsuario = Motorista::where('user_id', $request->user()->id)->value('id');
+
+        if ($decideCategoria && $motoristaDoUsuario !== null && MotoristaVeiculo::where('motorista_id', $motoristaDoUsuario)
+            ->where('veiculo_id', $veiculo->id)
+            ->exists()) {
+            return response()->json([
+                'message' => 'Você não pode aprovar elétrico ou táxi no seu próprio veículo.',
+            ], 403);
+        }
 
         $veiculo->fill($dados);
         // a gestão decidindo elétrico ou táxi encerra o pedido do motorista
