@@ -143,9 +143,14 @@ class MotoristaController extends Controller
             'cor' => 'required|string|max:40',
             'placa' => ['required', 'string', 'regex:/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/', Rule::unique('veiculos', 'placa')],
             'renavam' => ['required', 'digits:11', Rule::unique('veiculos', 'renavam')],
-            'categoria' => 'required|string|in:carro,moto,bicicleta',
+            'categoria' => 'required|string|in:carro,moto',
+            // não existe moto elétrica nas categorias
+            'eletrico' => 'sometimes|boolean|declined_if:categoria,moto',
+            'taxi' => 'sometimes|boolean',
             'uf' => 'required|string|size:2',
         ], [
+            'categoria.in' => 'O veículo deve ser carro ou moto.',
+            'eletrico.declined_if' => 'Só carros podem ser cadastrados como elétricos.',
             'placa.regex' => 'Informe uma placa brasileira válida.',
             'placa.unique' => 'Esta placa já está cadastrada.',
             'renavam.digits' => 'O RENAVAM deve ter 11 números.',

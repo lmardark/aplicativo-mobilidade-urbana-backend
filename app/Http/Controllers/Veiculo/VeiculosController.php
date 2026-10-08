@@ -39,7 +39,9 @@ class VeiculosController extends Controller
                 Rule::unique('veiculos')->where('renavam', $request->input('renavam')),
             ],
             'renavam' => 'required|string|max:11',
-            'categoria' => 'required|string',
+            'categoria' => 'required|string|in:carro,moto',
+            'eletrico' => 'sometimes|boolean|declined_if:categoria,moto',
+            'taxi' => 'sometimes|boolean',
             'status' => 'required|string',
             'uf' => 'required|string|size:2',
         ]);
@@ -83,12 +85,19 @@ class VeiculosController extends Controller
                     ->ignore($veiculo->id),
             ],
             'renavam' => 'sometimes|required|string|max:11',
-            'categoria' => 'sometimes|required|string',
+            'categoria' => 'sometimes|required|string|in:carro,moto',
+            'eletrico' => 'sometimes|boolean',
+            'taxi' => 'sometimes|boolean',
             'status' => 'sometimes|required|string',
             'uf' => 'sometimes|required|string|size:2',
         ]);
 
-        $veiculo->update($dados);
+        $veiculo->fill($dados);
+        // não existe moto elétrica: trocar para moto tira a marcação
+        if ($veiculo->categoria === 'moto') {
+            $veiculo->eletrico = false;
+        }
+        $veiculo->save();
 
         return response()->json([
             'success' => true,

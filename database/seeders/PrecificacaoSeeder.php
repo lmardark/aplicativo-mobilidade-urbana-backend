@@ -9,16 +9,18 @@ use Illuminate\Database\Seeder;
 class PrecificacaoSeeder extends Seeder
 {
     /**
-     * @var array<string, array{nome: string, estrategia: string}>
+     * Normal, Negocia e Táxi têm carro e moto; Elétrico só carro.
+     *
+     * @var array<string, array{nome: string, estrategia: string, ordem: int, grupo: string, tipo_veiculo: string, requisito_veiculo: string|null}>
      */
     private const PRODUTOS = [
-        'negocia' => ['nome' => 'Negocia', 'estrategia' => 'negociada', 'ordem' => 1],
-        'pop' => ['nome' => 'Pop', 'estrategia' => 'normal', 'ordem' => 2],
-        'carro_eletrico' => ['nome' => 'Carro Elétrico', 'estrategia' => 'eletrico', 'ordem' => 3],
-        'moto' => ['nome' => 'Moto', 'estrategia' => 'normal', 'ordem' => 4],
-        'moto_negocia' => ['nome' => 'Moto Negocia', 'estrategia' => 'negociada', 'ordem' => 5],
-        'moto_eletrica' => ['nome' => 'Moto Elétrica', 'estrategia' => 'eletrico', 'ordem' => 6],
-        'taxi' => ['nome' => 'Moto Táxi', 'estrategia' => 'taxi', 'ordem' => 7],
+        'negocia' => ['nome' => 'Negocia', 'estrategia' => 'negociada', 'ordem' => 1, 'grupo' => 'negocia', 'tipo_veiculo' => 'carro', 'requisito_veiculo' => null],
+        'pop' => ['nome' => 'Pop', 'estrategia' => 'normal', 'ordem' => 2, 'grupo' => 'normal', 'tipo_veiculo' => 'carro', 'requisito_veiculo' => null],
+        'carro_eletrico' => ['nome' => 'Carro Elétrico', 'estrategia' => 'eletrico', 'ordem' => 3, 'grupo' => 'eletrico', 'tipo_veiculo' => 'carro', 'requisito_veiculo' => 'eletrico'],
+        'moto' => ['nome' => 'Moto', 'estrategia' => 'normal', 'ordem' => 4, 'grupo' => 'normal', 'tipo_veiculo' => 'moto', 'requisito_veiculo' => null],
+        'moto_negocia' => ['nome' => 'Moto Negocia', 'estrategia' => 'negociada', 'ordem' => 5, 'grupo' => 'negocia', 'tipo_veiculo' => 'moto', 'requisito_veiculo' => null],
+        'taxi' => ['nome' => 'Táxi', 'estrategia' => 'taxi', 'ordem' => 6, 'grupo' => 'taxi', 'tipo_veiculo' => 'carro', 'requisito_veiculo' => 'taxi'],
+        'moto_taxi' => ['nome' => 'Moto Táxi', 'estrategia' => 'taxi', 'ordem' => 7, 'grupo' => 'taxi', 'tipo_veiculo' => 'moto', 'requisito_veiculo' => 'taxi'],
     ];
 
     /**
@@ -30,8 +32,8 @@ class PrecificacaoSeeder extends Seeder
         'moto' => ['base' => 1.00, 'km' => 0.90, 'minuto' => 0.16, 'espera' => 0.20, 'minimo' => 5.00],
         'moto_negocia' => ['base' => 0.00, 'km' => 0.90, 'minuto' => 0.16, 'espera' => 0.20, 'minimo' => 5.00],
         'carro_eletrico' => ['base' => 2.50, 'km' => 1.70, 'minuto' => 0.30, 'espera' => 0.30, 'minimo' => 9.00],
-        'moto_eletrica' => ['base' => 1.20, 'km' => 1.00, 'minuto' => 0.18, 'espera' => 0.20, 'minimo' => 5.50],
         'taxi' => ['base' => 3.00, 'km' => 1.80, 'minuto' => 0.32, 'espera' => 0.35, 'minimo' => 10.00],
+        'moto_taxi' => ['base' => 1.50, 'km' => 1.00, 'minuto' => 0.18, 'espera' => 0.20, 'minimo' => 6.00],
     ];
 
     private const TAXA_PLATAFORMA_PERCENTUAL = 6.00;
@@ -47,6 +49,9 @@ class PrecificacaoSeeder extends Seeder
                     'nome' => $dados['nome'],
                     'estrategia_precificacao' => $dados['estrategia'],
                     'ordem' => $dados['ordem'],
+                    'grupo' => $dados['grupo'],
+                    'tipo_veiculo' => $dados['tipo_veiculo'],
+                    'requisito_veiculo' => $dados['requisito_veiculo'],
                 ]
             );
 
