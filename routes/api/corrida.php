@@ -34,19 +34,19 @@ Route::post('motorista/corridas/{corrida}/destino/{alteracao}/{resposta}', [Corr
 
 Route::get('minha-corrida-atual', [CorridaController::class, 'minhaCorridaAtual']);
 Route::get('corridas/{corrida}/cancelamento', [CorridaController::class, 'previsaoCancelamento'])
-    ->middleware('throttle:10,1');
+    ->middleware('throttle:10,1,previa-cancelamento');
 Route::post('corridas/{corrida}/cancelar', [CorridaController::class, 'cancelar']);
 Route::post('corridas/{corrida}/pagamento', [CorridaController::class, 'alterarPagamento']);
-Route::post('corridas/{corrida}/destino', [CorridaController::class, 'pedirNovoDestino'])->middleware('throttle:10,1');
+Route::post('corridas/{corrida}/destino', [CorridaController::class, 'pedirNovoDestino'])->middleware('throttle:10,1,novo-destino');
 Route::delete('corridas/{corrida}/destino', [CorridaController::class, 'desistirDoNovoDestino']);
-Route::post('corridas/{corrida}/pix', [CobrancaPixController::class, 'criar'])->middleware('throttle:10,1');
+Route::post('corridas/{corrida}/pix', [CobrancaPixController::class, 'criar'])->middleware('throttle:10,1,cobranca-pix');
 Route::get('corridas/{corrida}/pix', [CobrancaPixController::class, 'consultar']);
-Route::post('corridas/{corrida}/pix/simular', [CobrancaPixController::class, 'simular'])->middleware('throttle:10,1');
-Route::post('corridas/{corrida}/cartao', [CobrancaCartaoController::class, 'criar'])->middleware('throttle:10,1');
+Route::post('corridas/{corrida}/pix/simular', [CobrancaPixController::class, 'simular'])->middleware('throttle:10,1,simular-pix');
+Route::post('corridas/{corrida}/cartao', [CobrancaCartaoController::class, 'criar'])->middleware('throttle:10,1,cobranca-cartao');
 Route::get('corridas/{corrida}/cartao', [CobrancaCartaoController::class, 'consultar']);
 
 Route::apiResource('corridas', CorridaController::class)->only(['index', 'store', 'show']);
-Route::post('precos-corrida', [CorridaController::class, 'precosCorrida'])->middleware('throttle:30,1');
+Route::post('precos-corrida', [CorridaController::class, 'precosCorrida'])->middleware('throttle:30,1,precos-corrida');
 Route::get('cotacoes-corrida/{cotacao}', [CorridaController::class, 'mostrarCotacao']);
 Route::get('corridas-negociada', [CorridaController::class, 'simularCorridaNegociada']);
 Route::get('corrida-para-avaliar', [AvaliacoesCorridaController::class, 'pendente']);
