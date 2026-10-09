@@ -820,6 +820,25 @@ it('mostra a avaliacao uma vez e preserva nota maxima quando o passageiro dispen
         ->where('usuario_id', $passageiro->user_id)->count())->toBe(1);
 });
 
+it('o motorista avalia pelo primeiro nome do convidado, sem o telefone dele', function () {
+    [$motorista] = criarMotoristaDespacho(true);
+    $passageiro = criarPassageiroDespacho();
+    $servico = app(DespachoCorridaService::class);
+    $corrida = criarCorridaDespacho($passageiro);
+    $corrida->update(['convidado_nome' => 'Maria Aparecida', 'convidado_telefone' => '69999990000']);
+    $servico->aceitar($motorista, $corrida->id);
+    $servico->transicionar($motorista, $corrida->id, 'cheguei');
+    $servico->transicionar($motorista, $corrida->id, 'iniciar');
+    $servico->transicionar($motorista, $corrida->id, 'finalizar');
+
+    $this->actingAs($motorista->user, 'jwt')
+        ->getJson('/api/corrida-para-avaliar')
+        ->assertOk()
+        ->assertJsonPath('avaliando_como', 'motorista')
+        ->assertJsonPath('corrida.convidado_nome', 'Maria')
+        ->assertJsonMissingPath('corrida.convidado_telefone');
+});
+
 it('aceita registrar_padrao=true na query, como o axios do app envia', function () {
     [$motorista] = criarMotoristaDespacho(true);
     $passageiro = criarPassageiroDespacho();
