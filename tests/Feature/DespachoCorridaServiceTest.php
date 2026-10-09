@@ -744,6 +744,21 @@ it('protege os dados pessoais no detalhe da corrida e mostra somente o primeiro 
         ->assertJsonMissingPath('motorista.user.data_nascimento');
 });
 
+it('manda os horarios da corrida com fuso, para o app nao ler UTC como hora local', function () {
+    [$motorista] = criarMotoristaDespacho(true);
+    $passageiro = criarPassageiroDespacho();
+    $corrida = criarCorridaDespacho($passageiro);
+    $corrida->update(['tempo_solicitacao' => '2026-10-09 12:34:45']);
+    app(DespachoCorridaService::class)->aceitar($motorista, $corrida->id);
+
+    $resposta = $this->actingAs($passageiro->user, 'jwt')
+        ->getJson('/api/corridas/'.$corrida->id)
+        ->assertOk();
+
+    expect($resposta->json('tempo_solicitacao'))->toBe('2026-10-09T12:34:45.000000Z')
+        ->and($resposta->json('tempo_aceite'))->toEndWith('Z');
+});
+
 it('fecha o fluxo completo e permite uma avaliacao para cada lado', function () {
     Event::fake([CorridaAtualizada::class, CorridasDisponiveisAlteradas::class]);
     [$motorista] = criarMotoristaDespacho(true);
