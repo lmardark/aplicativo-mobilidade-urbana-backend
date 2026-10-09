@@ -9,18 +9,19 @@ use Illuminate\Database\Seeder;
 class PrecificacaoSeeder extends Seeder
 {
     /**
-     * Normal, Negocia e Táxi têm carro e moto; Elétrico só carro.
+     * Nome = categoria · veículo. Normal, Negocia e Táxi têm carro e moto;
+     * Elétrico só carro.
      *
      * @var array<string, array{nome: string, estrategia: string, ordem: int, grupo: string, tipo_veiculo: string, requisito_veiculo: string|null}>
      */
     private const PRODUTOS = [
-        'negocia' => ['nome' => 'Negocia', 'estrategia' => 'negociada', 'ordem' => 1, 'grupo' => 'negocia', 'tipo_veiculo' => 'carro', 'requisito_veiculo' => null],
-        'pop' => ['nome' => 'Pop', 'estrategia' => 'normal', 'ordem' => 2, 'grupo' => 'normal', 'tipo_veiculo' => 'carro', 'requisito_veiculo' => null],
-        'carro_eletrico' => ['nome' => 'Carro Elétrico', 'estrategia' => 'eletrico', 'ordem' => 3, 'grupo' => 'eletrico', 'tipo_veiculo' => 'carro', 'requisito_veiculo' => 'eletrico'],
-        'moto' => ['nome' => 'Moto', 'estrategia' => 'normal', 'ordem' => 4, 'grupo' => 'normal', 'tipo_veiculo' => 'moto', 'requisito_veiculo' => null],
-        'moto_negocia' => ['nome' => 'Moto Negocia', 'estrategia' => 'negociada', 'ordem' => 5, 'grupo' => 'negocia', 'tipo_veiculo' => 'moto', 'requisito_veiculo' => null],
-        'taxi' => ['nome' => 'Táxi', 'estrategia' => 'taxi', 'ordem' => 6, 'grupo' => 'taxi', 'tipo_veiculo' => 'carro', 'requisito_veiculo' => 'taxi'],
-        'moto_taxi' => ['nome' => 'Moto Táxi', 'estrategia' => 'taxi', 'ordem' => 7, 'grupo' => 'taxi', 'tipo_veiculo' => 'moto', 'requisito_veiculo' => 'taxi'],
+        'negocia' => ['nome' => 'Negocia · Carro', 'estrategia' => 'negociada', 'ordem' => 1, 'grupo' => 'negocia', 'tipo_veiculo' => 'carro', 'requisito_veiculo' => null],
+        'pop' => ['nome' => 'Normal · Carro', 'estrategia' => 'normal', 'ordem' => 2, 'grupo' => 'normal', 'tipo_veiculo' => 'carro', 'requisito_veiculo' => null],
+        'carro_eletrico' => ['nome' => 'Elétrico · Carro', 'estrategia' => 'eletrico', 'ordem' => 3, 'grupo' => 'eletrico', 'tipo_veiculo' => 'carro', 'requisito_veiculo' => 'eletrico'],
+        'moto' => ['nome' => 'Normal · Moto', 'estrategia' => 'normal', 'ordem' => 4, 'grupo' => 'normal', 'tipo_veiculo' => 'moto', 'requisito_veiculo' => null],
+        'moto_negocia' => ['nome' => 'Negocia · Moto', 'estrategia' => 'negociada', 'ordem' => 5, 'grupo' => 'negocia', 'tipo_veiculo' => 'moto', 'requisito_veiculo' => null],
+        'taxi' => ['nome' => 'Táxi · Carro', 'estrategia' => 'taxi', 'ordem' => 6, 'grupo' => 'taxi', 'tipo_veiculo' => 'carro', 'requisito_veiculo' => 'taxi'],
+        'moto_taxi' => ['nome' => 'Táxi · Moto', 'estrategia' => 'taxi', 'ordem' => 7, 'grupo' => 'taxi', 'tipo_veiculo' => 'moto', 'requisito_veiculo' => 'taxi'],
     ];
 
     /**

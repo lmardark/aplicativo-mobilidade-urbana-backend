@@ -284,8 +284,8 @@ class CorridaController extends Controller
                 'veiculo',
                 'corrida_destinos',
                 'corrida_financeiro',
-                'produto:id,nome',
-                'opcoes.produto:id,nome,codigo',
+                'produto:id,nome,grupo,tipo_veiculo',
+                'opcoes.produto:id,nome,codigo,grupo,tipo_veiculo',
             ])
             ->orderByDesc('id')
             ->first();
@@ -473,7 +473,7 @@ class CorridaController extends Controller
         $dados = $request->validate([
             'cotacao_id' => 'required|uuid',
             'produto_codigo' => 'required_without:produtos_codigos|string|max:60',
-            // várias categorias de uma vez (ex.: Pop e Moto): vai quem atender primeiro
+            // várias categorias de uma vez (ex.: Normal de carro e de moto): vai quem atender primeiro
             'produtos_codigos' => 'sometimes|array|min:1|max:8',
             'produtos_codigos.*' => 'string|max:60|distinct',
             // Negocia: quanto o passageiro oferece
