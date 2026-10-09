@@ -25,6 +25,7 @@ use App\Services\SolicitarCorridaService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -572,11 +573,15 @@ class CorridaController extends Controller
 
         $chaveCache = 'busca-endereco:'.md5(mb_strtolower(trim($endereco)));
 
-        $resultados = Cache::remember(
-            $chaveCache,
-            now()->addHours(6),
-            fn () => $this->consultarPlaces($endereco)
-        );
+        /** @var list<array{name: string, formattedAddress: string, latitude: float|null, longitude: float|null}>|null $resultados */
+        $resultados = Cache::get($chaveCache);
+
+        if ($resultados === null) {
+            $resultados = $this->consultarEnderecos($endereco);
+            // vazio guarda pouco: uma falha passageira do Google não pode
+            // esconder a rua por horas
+            Cache::put($chaveCache, $resultados, $resultados === [] ? now()->addMinutes(10) : now()->addHours(6));
+        }
 
         if (empty($resultados)) {
             return response()->json([]);
@@ -646,6 +651,91 @@ class CorridaController extends Controller
         $faixa = (float) config('services.google_maps.faixa_proximidade_km');
 
         return (int) log(1 + $quilometros / max($faixa, 0.1), 2);
+    }
+
+    /**
+     * Lugares (Places) e, para nome de rua, endereços (Geocoding): a busca de
+     * lugares do Google não acha muitas ruas ("Rua Jobu Miró", "Rua X, 123"),
+     * que o geocoding de endereço acha.
+     *
+     * @return list<array{name: string, formattedAddress: string, latitude: float|null, longitude: float|null}>
+     */
+    private function consultarEnderecos(string $endereco): array
+    {
+        $lugares = $this->consultarPlaces($endereco);
+        $enderecos = $lugares === [] || $this->pareceEndereco($endereco)
+            ? $this->consultarGeocoding($endereco)
+            : [];
+
+        $vistos = [];
+        $unicos = [];
+
+        foreach ([...$enderecos, ...$lugares] as $resultado) {
+            $chave = mb_strtolower($resultado['name'].'|'.$resultado['formattedAddress']);
+
+            if (! isset($vistos[$chave])) {
+                $vistos[$chave] = true;
+                $unicos[] = $resultado;
+            }
+        }
+
+        return $unicos;
+    }
+
+    private function pareceEndereco(string $endereco): bool
+    {
+        return preg_match('/^\s*(r\.?|rua|av\.?|avenida|tv\.?|travessa|al\.?|alameda|estrada|rodovia|pç\.?|praça)\s/iu', $endereco) === 1
+            || preg_match('/\d/', $endereco) === 1;
+    }
+
+    /**
+     * @return list<array{name: string, formattedAddress: string, latitude: float|null, longitude: float|null}>
+     */
+    private function consultarGeocoding(string $endereco): array
+    {
+        $regiao = $this->caixaDaRegiaoAtendida();
+
+        try {
+            $response = Http::timeout(8)->get('https://maps.googleapis.com/maps/api/geocode/json', [
+                'address' => $endereco,
+                'key' => config('services.google_maps.key'),
+                'language' => 'pt-BR',
+                'region' => 'br',
+                'components' => 'country:BR',
+                'bounds' => $regiao['low']['latitude'].','.$regiao['low']['longitude'].'|'
+                    .$regiao['high']['latitude'].','.$regiao['high']['longitude'],
+            ]);
+        } catch (ConnectionException) {
+            return [];
+        }
+
+        $resultados = [];
+
+        foreach ($response->json('results') ?? [] as $resultado) {
+            $latitude = $resultado['geometry']['location']['lat'] ?? null;
+            $longitude = $resultado['geometry']['location']['lng'] ?? null;
+            $endereco = (string) ($resultado['formatted_address'] ?? '');
+
+            // fora da região atendida não serve (o bounds só dá preferência)
+            if (! is_numeric($latitude) || ! is_numeric($longitude) || $endereco === ''
+                || $latitude < $regiao['low']['latitude'] || $latitude > $regiao['high']['latitude']
+                || $longitude < $regiao['low']['longitude'] || $longitude > $regiao['high']['longitude']) {
+                continue;
+            }
+
+            // "R. Jobu Miró, 123 - Bairro, Cidade - RO, CEP, Brasil": o nome é a
+            // rua (com número), o resto vira a linha de baixo
+            [$nome, $restante] = array_pad(explode(' - ', $endereco, 2), 2, '');
+
+            $resultados[] = [
+                'name' => $nome,
+                'formattedAddress' => $restante !== '' ? $restante : $endereco,
+                'latitude' => (float) $latitude,
+                'longitude' => (float) $longitude,
+            ];
+        }
+
+        return array_slice($resultados, 0, 3);
     }
 
     /**
